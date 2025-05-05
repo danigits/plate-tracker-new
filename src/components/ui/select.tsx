@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -131,6 +132,21 @@ const SelectItem = React.forwardRef<
   </SelectPrimitive.Item>
 ))
 SelectItem.displayName = SelectPrimitive.Item.displayName
+
+// This ensures a non-empty value is provided
+const originalSelectedItemComponent = SelectItem;
+const SafeSelectItem = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+>((props, ref) => {
+  // Make sure value is never an empty string
+  if (props.value === '') {
+    console.warn('SelectItem received an empty string value. This is not allowed and may cause errors.');
+    return null;
+  }
+  return <originalSelectedItemComponent ref={ref} {...props} />;
+});
+SafeSelectItem.displayName = 'SafeSelectItem';
 
 const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,

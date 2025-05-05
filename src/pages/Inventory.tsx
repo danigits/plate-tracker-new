@@ -18,13 +18,13 @@ import { InventoryItem } from '@/types/kitchen';
 
 const Inventory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   // Filter inventory items
   const filteredItems = mockInventory.filter(item => 
     (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      item.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (categoryFilter === '' || item.category === categoryFilter)
+    (categoryFilter === 'all' || item.category === categoryFilter)
   );
 
   // Calculate stock status
@@ -103,7 +103,7 @@ const Inventory: React.FC = () => {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="vegetable">Vegetables</SelectItem>
                 <SelectItem value="meat">Meat</SelectItem>
                 <SelectItem value="grain">Grains</SelectItem>
