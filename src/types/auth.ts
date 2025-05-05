@@ -17,6 +17,9 @@ export enum UserRole {
 export interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithBiometrics: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  registerBiometrics: () => Promise<boolean>;
+  hasBiometricCredential: boolean;
 }

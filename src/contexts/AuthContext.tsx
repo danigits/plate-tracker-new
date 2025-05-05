@@ -1,6 +1,7 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User, UserRole, AuthContextType } from '@/types/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 // Mock users for demo purposes
 const mockUsers = [
@@ -53,9 +54,10 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasBiometricCredential, setHasBiometricCredential] = useState(false);
 
-  // Check for stored user on initial load
-  React.useEffect(() => {
+  // Check for stored user and biometric capability on initial load
+  useEffect(() => {
     const storedUser = localStorage.getItem('kitchenUser');
     if (storedUser) {
       try {
@@ -65,7 +67,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.removeItem('kitchenUser');
       }
     }
+    
+    // Check if WebAuthn (biometrics) is available
+    checkBiometricAvailability();
   }, []);
+
+  // Check if biometric authentication is available
+  const checkBiometricAvailability = async () => {
+    // Check if the browser supports WebAuthn
+    if (window.PublicKeyCredential) {
+      try {
+        // Check if user has registered biometrics before
+        const hasCredential = localStorage.getItem('biometric_credential_id');
+        setHasBiometricCredential(!!hasCredential);
+      } catch (error) {
+        console.error('Error checking biometric availability:', error);
+        setHasBiometricCredential(false);
+      }
+    } else {
+      console.log('WebAuthn is not supported by this browser');
+      setHasBiometricCredential(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -92,13 +115,78 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   };
 
+  const loginWithBiometrics = async () => {
+    setIsLoading(true);
+    
+    try {
+      const credentialId = localStorage.getItem('biometric_credential_id');
+      const userEmail = localStorage.getItem('biometric_user_email');
+      
+      if (!credentialId || !userEmail) {
+        throw new Error('No biometric credentials found');
+      }
+      
+      // For demo purposes, find the user by email
+      const foundUser = mockUsers.find(u => u.email === userEmail);
+      
+      if (foundUser) {
+        // In a real implementation, we would verify the credential with the server
+        // Here we'll simulate a successful authentication
+        
+        const { password, ...userWithoutPassword } = foundUser;
+        setUser(userWithoutPassword);
+        localStorage.setItem('kitchenUser', JSON.stringify(userWithoutPassword));
+        setIsLoading(false);
+        return;
+      }
+      
+      throw new Error('User not found');
+    } catch (error) {
+      console.error('Biometric authentication error:', error);
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
+  const registerBiometrics = async (): Promise<boolean> => {
+    if (!user) {
+      console.error('User must be logged in to register biometrics');
+      return false;
+    }
+    
+    try {
+      // In a real implementation, we would create a credential on the server
+      // and register it with the browser
+      
+      // For demo purposes, we'll just store a flag in localStorage
+      const demoCredentialId = btoa(user.email);
+      localStorage.setItem('biometric_credential_id', demoCredentialId);
+      localStorage.setItem('biometric_user_email', user.email);
+      
+      setHasBiometricCredential(true);
+      return true;
+    } catch (error) {
+      console.error('Error registering biometrics:', error);
+      return false;
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('kitchenUser');
+    // We don't remove biometric credentials on logout
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      isLoading,
+      loginWithBiometrics,
+      registerBiometrics,
+      hasBiometricCredential
+    }}>
       {children}
     </AuthContext.Provider>
   );
