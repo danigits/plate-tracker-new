@@ -23,3 +23,10 @@ export interface AuthContextType {
   registerBiometrics: () => Promise<boolean>;
   hasBiometricCredential: boolean;
 }
+
+export interface Profile {
+  id: string;
+  name: string;
+  role: 'admin' | 'chef' | 'cutter' | 'supervisor';
+  kitchen_id?: string | null;
+}

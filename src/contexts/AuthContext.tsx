@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, UserRole, AuthContextType } from '@/types/auth';
+import { User, UserRole, AuthContextType,Profile } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
+
 
 // Mock users for demo purposes
 const mockUsers = [
@@ -36,6 +37,8 @@ const mockUsers = [
     role: UserRole.SUPERVISOR
   }
 ];
+
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -90,63 +93,86 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // const login = async (email: string, password: string) => {
+  //   setIsLoading(true);
+    
+  //   // Simulate API call
+  //   return new Promise<void>((resolve, reject) => {
+  //     setTimeout(() => {
+  //       const foundUser = mockUsers.find(
+  //         (u) => u.email === email && u.password === password
+  //       );
+        
+  //       if (foundUser) {
+  //         // Remove password before storing user
+  //         const { password, ...userWithoutPassword } = foundUser;
+  //         setUser(userWithoutPassword);
+  //         localStorage.setItem('kitchenUser', JSON.stringify(userWithoutPassword));
+  //         setIsLoading(false);
+  //         resolve();
+  //       } else {
+  //         setIsLoading(false);
+  //         reject(new Error('Invalid email or password'));
+  //       }
+  //     }, 1000);
+  //   });
+  // };
+
+  // const signup=async(email: string, password: string)=>{
+  //   setIsLoading(true);
+  //   const { data, error } = await supabase.auth.admin.createUser({
+  //     email: 'test@kitchen.com',
+  //     password: 'test1234',
+  //     email_confirm: true // optional: skips email confirmation
+  //   });
+    
+  // }
+
   const login = async (email: string, password: string) => {
     setIsLoading(true);
+  
+   
     
-    // Simulate API call
-    return new Promise<void>((resolve, reject) => {
-      setTimeout(() => {
-        const foundUser = mockUsers.find(
-          (u) => u.email === email && u.password === password
-        );
-        
-        if (foundUser) {
-          // Remove password before storing user
-          const { password, ...userWithoutPassword } = foundUser;
-          setUser(userWithoutPassword);
-          localStorage.setItem('kitchenUser', JSON.stringify(userWithoutPassword));
-          setIsLoading(false);
-          resolve();
-        } else {
-          setIsLoading(false);
-          reject(new Error('Invalid email or password'));
-        }
-      }, 1000);
+    // Sign in with Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
-  };
-
-  const loginWithBiometrics = async () => {
-    setIsLoading(true);
-    
-    try {
-      const credentialId = localStorage.getItem('biometric_credential_id');
-      const userEmail = localStorage.getItem('biometric_user_email');
-      
-      if (!credentialId || !userEmail) {
-        throw new Error('No biometric credentials found');
-      }
-      
-      // For demo purposes, find the user by email
-      const foundUser = mockUsers.find(u => u.email === userEmail);
-      
-      if (foundUser) {
-        // In a real implementation, we would verify the credential with the server
-        // Here we'll simulate a successful authentication
-        
-        const { password, ...userWithoutPassword } = foundUser;
-        setUser(userWithoutPassword);
-        localStorage.setItem('kitchenUser', JSON.stringify(userWithoutPassword));
-        setIsLoading(false);
-        return;
-      }
-      
-      throw new Error('User not found');
-    } catch (error) {
-      console.error('Biometric authentication error:', error);
+  
+    if (error || !data?.session || !data?.user) {
       setIsLoading(false);
-      throw error;
+      throw new Error('Invalid email or password');
     }
+  
+    // Fetch user profile from the profiles table
+    const { data: profile, error: profileError } = await supabase
+  .from<Profile>('profiles')
+  .select('*')  // Select all columns
+  .eq('id', data.user.id)  // Filter by user id
+  .single();  // Get a single result
+
+if (profileError || !profile) {
+  setIsLoading(false);
+  throw new Error('Failed to load user profile');
+}
+
+  
+    // Combine user data from Supabase Auth and profiles
+    const userData: User = {
+      id: data.user.id,
+      email: data.user.email!,
+      name: profile.name,
+      role: profile.role as UserRole,
+      kitchenId: profile.kitchen_id ?? undefined,
+    };
+  
+    // Update state and localStorage
+    setUser(userData);
+    localStorage.setItem('kitchenUser', JSON.stringify(userData));
+  
+    setIsLoading(false);
   };
+  
 
   const registerBiometrics = async (): Promise<boolean> => {
     if (!user) {
@@ -171,14 +197,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem('kitchenUser');
-    // We don't remove biometric credentials on logout
   };
-
+  const loginWithBiometrics = async () => {
+    setIsLoading(true);
+  
+    try {
+      // Check if biometric credentials exist
+      const credentialId = localStorage.getItem('biometric_credential_id');
+      if (!credentialId) {
+        throw new Error('No biometric credentials found');
+      }
+  
+      // For demo purposes: Here you'd usually interact with the WebAuthn API to get the user's credentials
+      // We'll simulate the biometric login process.
+      // You would create a real WebAuthn authentication process instead of this mock
+      const demoCredentialId = localStorage.getItem('biometric_credential_id')!;
+      
+      if (demoCredentialId) {
+        // Simulate a login if credential is found
+        const userData = JSON.parse(localStorage.getItem('kitchenUser') || '{}');
+        if (!userData) throw new Error('User not found');
+        
+        setUser(userData);
+        setIsLoading(false);
+        return;
+      }
+  
+      throw new Error('Biometric authentication failed');
+    } catch (error) {
+      console.error('Error during biometric login:', error);
+      setIsLoading(false);
+      throw new Error('Failed to login with biometrics');
+    }
+  };
+  
+  
   return (
     <AuthContext.Provider value={{ 
+      
       user, 
       login, 
       logout, 
@@ -192,4 +252,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-export default AuthContext;
+export { AuthContext };
+

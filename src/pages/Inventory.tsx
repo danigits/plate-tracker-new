@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,19 +13,91 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Package, Plus, Search } from 'lucide-react';
-import { mockInventory } from '@/data/mockData';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+//import { mockInventory } from '@/data/mockData';
 import { InventoryItem } from '@/types/kitchen';
+import { supabase } from '@/integrations/supabase/client';
+import {AddItemForm} from '@/components/dashboard/AddItemForm'
+
+
 
 const Inventory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+const [loading, setLoading] = useState(true);
+const [priceMap, setPriceMap] = useState<Record<string, number>>({});
+
+useEffect(() => {
+  const fetchInventory = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .select('*');
+  
+    if (error) {
+      console.error('Error fetching inventory:', error);
+    } else {
+      setInventory(data);
+    }
+    setLoading(false);
+  };
+  
+
+  fetchInventory();
+  
+}, []);
+
+
 
   // Filter inventory items
-  const filteredItems = mockInventory.filter(item => 
+  const filteredItems = inventory.filter(item =>
     (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      item.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (categoryFilter === 'all' || item.category === categoryFilter)
   );
+  
+  const updateItem = async (updatedItem: InventoryItem) => {
+    const { error } = await supabase
+      .from('inventory_items')
+      .update({
+        name: updatedItem.name,
+        category: updatedItem.category,
+        quantity: updatedItem.quantity,
+        threshold: updatedItem.threshold,
+        unit: updatedItem.unit,
+      //  unit: updatedItem.pricePerUnit,
+      })
+      .eq('id', updatedItem.id);
+  
+    if (error) {
+      console.error('Update error:', error);
+    } else {
+      console.log('Item updated!');
+      // You can re-fetch items or call a refresh callback here
+    }
+  };
+
+  const fetchInventory = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .select('*');
+  
+    if (error) {
+      console.error('Error fetching inventory:', error);
+    } else {
+      setInventory(data);
+    }
+    setLoading(false);
+  };
 
   // Calculate stock status
   const getStockStatus = (item: InventoryItem) => {
@@ -35,6 +107,13 @@ const Inventory: React.FC = () => {
     return 'good';
   };
 
+  const totalStockValue = inventory.reduce(
+    (sum, item) => sum + item.quantity * (priceMap[item.id] ?? 0),
+    0
+  );
+  
+
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between">
@@ -42,9 +121,23 @@ const Inventory: React.FC = () => {
           <h1 className="text-2xl font-bold">Inventory Management</h1>
           <p className="text-muted-foreground">Track and manage your kitchen inventory</p>
         </div>
-        <Button className="bg-kitchen-secondary hover:bg-green-600">
+        {/* <Button className="bg-kitchen-secondary hover:bg-green-600" onClick={AddItemForm}>
           <Plus className="mr-2 h-4 w-4" /> Add Item
-        </Button>
+        </Button> */}
+        <Dialog>
+  <DialogTrigger asChild>
+    <Button className="bg-kitchen-secondary hover:bg-green-600">
+      <Plus className="mr-2 h-4 w-4" /> Add Item
+    </Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Add Inventory Item</DialogTitle>
+    </DialogHeader>
+    <AddItemForm onItemAdded={fetchInventory} />
+  </DialogContent>
+</Dialog>
+
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -55,7 +148,7 @@ const Inventory: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{mockInventory.length}</div>
+            <div className="text-3xl font-bold">{inventory.length}</div>
           </CardContent>
         </Card>
         
@@ -67,7 +160,7 @@ const Inventory: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-amber-500">
-              {mockInventory.filter(item => getStockStatus(item) === 'low').length}
+            {inventory.filter(item => getStockStatus(item) === 'low').length}
             </div>
           </CardContent>
         </Card>
@@ -79,7 +172,7 @@ const Inventory: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">₹24,500</div>
+            <div className="text-3xl font-bold">₹{totalStockValue}</div>
           </CardContent>
         </Card>
       </div>
@@ -121,12 +214,15 @@ const Inventory: React.FC = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Quantity</TableHead>
+                {/* <TableHead>Rate</TableHead> */}
                 <TableHead>Threshold</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            {loading ? (
+  <p>Loading inventory...</p>
+) : (<TableBody>
               {filteredItems.map((item) => {
                 const stockStatus = getStockStatus(item);
                 
@@ -144,6 +240,9 @@ const Inventory: React.FC = () => {
                     <TableCell>
                       {item.quantity} {item.unit}
                     </TableCell>
+                    {/* <TableCell>
+                      {item.pricePerUnit} {'INR'}
+                    </TableCell> */}
                     <TableCell>
                       {item.threshold} {item.unit}
                     </TableCell>
@@ -163,7 +262,7 @@ const Inventory: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm">Update</Button>
+                      <Button variant="outline" size="sm" onClick={() => updateItem(item)}>Update</Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -175,7 +274,7 @@ const Inventory: React.FC = () => {
                   </TableCell>
                 </TableRow>
               )}
-            </TableBody>
+            </TableBody>)}
           </Table>
         </CardContent>
       </Card>
@@ -184,3 +283,5 @@ const Inventory: React.FC = () => {
 };
 
 export default Inventory;
+
+

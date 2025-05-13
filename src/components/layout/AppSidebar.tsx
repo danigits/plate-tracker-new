@@ -5,7 +5,8 @@ import {
   ChefHat, 
   LayoutDashboard, 
   Package, 
-  ClipboardList, 
+  ClipboardList,
+  CookingPot, 
   BarChart2, 
   Users, 
   Settings, 
@@ -70,6 +71,14 @@ const AppSidebar = () => {
                   <Link to="/preparation">
                     <ClipboardList size={20} />
                     <span>Preparation</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/recipes">
+                    <CookingPot size={20} />
+                    <span>Recipes</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

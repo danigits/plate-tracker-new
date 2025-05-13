@@ -12,6 +12,7 @@ export interface InventoryItem {
   name: string;
   category: 'vegetable' | 'meat' | 'grain' | 'dairy' | 'spice' | 'other';
   quantity: number;
+  // pricePerUnit: number;
   unit: 'kg' | 'g' | 'l' | 'ml' | 'unit' | 'pack';
   threshold: number;
   kitchenId: string;
@@ -29,4 +30,10 @@ export interface PreparationPlan {
   wastageReason?: string;
   status: 'planned' | 'in-progress' | 'completed';
   recipes: string[];
+}
+
+export type NewInventoryItem = Omit<InventoryItem, 'id'>;
+
+export interface AddItemProps {
+  onItemAdded: () => void;
 }
