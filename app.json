@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "vite_react_shadcn_ts",
+    "name": "plate-tracker",
     "slug": "plate-tracker-app",
     "version": "1.0.0",
     "extra": {

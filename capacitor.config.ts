@@ -1,9 +1,10 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.example.app',
-  appName: 'vite_react_shadcn_ts',
-  webDir: 'dist'
+  appId: 'com.yourcompany.appname', // Must match Android package name
+  appName: 'plate-tracker',
+  webDir: 'dist', // Should match your build output directory
+  bundledWebRuntime: false
 };
 
 export default config;
