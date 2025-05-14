@@ -1,5 +1,8 @@
 {
   "expo": {
+    "name": "vite_react_shadcn_ts",
+    "slug": "plate-tracker-app",
+    "version": "1.0.0",
     "extra": {
       "eas": {
         "projectId": "eec09b30-4abb-4c16-8d54-f494e7a71501"
