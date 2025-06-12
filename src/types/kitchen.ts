@@ -1,3 +1,4 @@
+import { UUID } from "crypto";
 
 export interface Kitchen {
   id: string;
@@ -9,26 +10,30 @@ export interface Kitchen {
 
 export interface InventoryItem {
   id: string;
+  
   name: string;
-  category: 'vegetable' | 'meat' | 'grain' | 'dairy' | 'spice' | 'other';
+  category: 'vegetable' | 'meat' | 'grain' | 'dairy' | 'spice' | 'groceries' | 'other';
   quantity: number;
-  // pricePerUnit: number;
-  unit: 'kg' | 'g' | 'l' | 'ml' | 'unit' | 'pack';
+  pricePerUnit: number;
+  unit: 'kg' | 'gm' | 'ltr' | 'ml' | 'unit' | 'pack';
   threshold: number;
   kitchenId: string;
   lastUpdated: string;
+  image_url?: string; // ✅ new optional field
 }
+
 
 export interface PreparationPlan {
   id: string;
   kitchenId: string;
+  menu_item_id:UUID;
   date: string;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'special';
   estimatedPlates: number;
   actualPlates: number | null;
   wastage: number | null;
   wastageReason?: string;
-  status: 'planned' | 'in-progress' | 'completed';
+  is_approved: 'planned' | 'in-progress' | 'completed'|'true';
   recipes: string[];
 }
 
@@ -36,4 +41,10 @@ export type NewInventoryItem = Omit<InventoryItem, 'id'>;
 
 export interface AddItemProps {
   onItemAdded: () => void;
+}
+
+export interface Ingredient {
+  id: string;
+  name: string;
+  unit: string;
 }

@@ -9,13 +9,17 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  optimizeDeps: {
+    exclude: ['react-native']
+  },
   plugins: [
-    react(),
+    [react()],
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
+        replacement: "@nectary/components/$1/index",
       "@": path.resolve(__dirname, "./src"),
     },
   },

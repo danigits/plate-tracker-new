@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
-import { UserRole } from '@/types/auth';
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { UserRole } from "@/types/auth";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -16,39 +16,66 @@ export default function UsersPage() {
   }, []);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase.from('profiles').select('*');
-    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    const { data, error } = await supabase.from("profiles").select("*");
+    if (error)
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     else setUsers(data);
   };
 
   const fetchKitchens = async () => {
-    const { data } = await supabase.from('kitchens').select('id, name');
+    const { data } = await supabase.from("kitchens").select("id, name");
     setKitchens(data || []);
   };
 
   const updateUser = async (id: string, updates: any) => {
-    const { error } = await supabase.from('profiles').update(updates).eq('id', id);
+    const { error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", id);
     if (error) {
-      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
+      toast({
+        title: "Update failed",
+        description: error.message,
+        variant: "destructive",
+      });
     } else {
-      toast({ title: 'Updated', description: 'User updated successfully' });
+      toast({ title: "Updated", description: "User updated successfully" });
       fetchUsers();
     }
   };
 
   const setPassword = async (email: string, newPassword: string) => {
-    const { error } = await supabase.auth.admin.updateUserByEmail(email, {
-      password: newPassword
+    const { error } = await supabase.auth.admin.updateUserById(email, {
+      password: newPassword,
     });
 
-    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    else toast({ title: 'Password Set', description: `Password updated for ${email}` });
+    if (error)
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    else
+      toast({
+        title: "Password Set",
+        description: `Password updated for ${email}`,
+      });
   };
 
   const sendResetLink = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) toast({ title: 'Failed', description: error.message, variant: 'destructive' });
-    else toast({ title: 'Link Sent', description: `Reset link sent to ${email}` });
+    if (error)
+      toast({
+        title: "Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    else
+      toast({ title: "Link Sent", description: `Reset link sent to ${email}` });
   };
 
   return (
@@ -56,7 +83,9 @@ export default function UsersPage() {
       <h2 className="text-2xl font-bold">User Management</h2>
       {users.map((user) => (
         <div key={user.id} className="p-3 border rounded space-y-2">
-          <p><strong>{user.name}</strong> ({user.name})</p>
+          <p>
+            <strong>{user.name}</strong> ({user.name})
+          </p>
 
           <div className="flex gap-2">
             <select
@@ -65,27 +94,35 @@ export default function UsersPage() {
               className="border rounded p-1"
             >
               {Object.values(UserRole).map((r) => (
-                <option key={r} value={r}>{r}</option>
+                <option key={r} value={r}>
+                  {r}
+                </option>
               ))}
             </select>
 
             <select
-              value={user.kitchen_id || ''}
-              onChange={(e) => updateUser(user.id, { kitchen_id: e.target.value })}
+              value={user.kitchen_id || ""}
+              onChange={(e) =>
+                updateUser(user.id, { kitchen_id: e.target.value })
+              }
               className="border rounded p-1"
             >
               <option value="">Select Kitchen</option>
-              {kitchens.map(k => (
-                <option key={k.id} value={k.id}>{k.name}</option>
+              {kitchens.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={() => {
-              const newPassword = prompt('Enter new password:');
-              if (newPassword) setPassword(user.email, newPassword);
-            }}>
+            <Button
+              onClick={() => {
+                const newPassword = prompt("Enter new password:");
+                if (newPassword) setPassword(user.email, newPassword);
+              }}
+            >
               Set Password
             </Button>
 

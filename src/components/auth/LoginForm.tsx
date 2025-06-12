@@ -1,19 +1,33 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ChefHat, Fingerprint, Shield } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChefHat, Fingerprint, Shield } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isRegisteringBiometrics, setIsRegisteringBiometrics] = useState(false);
-  const { login, isLoading, loginWithBiometrics, registerBiometrics, hasBiometricCredential, user } = useAuth();
+  const {
+    login,
+    isLoading,
+    loginWithBiometrics,
+    registerBiometrics,
+    hasBiometricCredential,
+    user,
+  } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -25,7 +39,7 @@ const LoginForm = () => {
         title: "Login successful",
         description: "Welcome back!",
       });
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -42,12 +56,13 @@ const LoginForm = () => {
         title: "Biometric login successful",
         description: "Welcome back!",
       });
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Biometric login failed",
-        description: "Could not authenticate with biometrics. Please try again or use password.",
+        description:
+          "Could not authenticate with biometrics. Please try again or use password.",
       });
     }
   };
@@ -88,11 +103,11 @@ const LoginForm = () => {
         <h1 className="mt-4 text-3xl font-bold">Kitchen Manager</h1>
         <p className="mt-2 text-gray-500">Sign in to your account</p>
       </div>
-      
+
       {hasBiometricCredential && (
         <div className="flex justify-center">
-          <Button 
-            onClick={handleBiometricLogin} 
+          <Button
+            onClick={handleBiometricLogin}
             className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700"
             disabled={isLoading}
           >
@@ -112,20 +127,20 @@ const LoginForm = () => {
           </span>
         </div>
       </div>
-      
+
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            placeholder="admin@kitchen.com" 
+          <Input
+            id="email"
+            type="email"
+            placeholder="admin@kitchen.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
-        
+
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
@@ -133,24 +148,33 @@ const LoginForm = () => {
               Forgot password?
             </a>
           </div>
-          <Input 
-            id="password" 
-            type="password" 
+          <Input
+            id="password"
+            type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
-        
-        <Button type="submit" className="w-full bg-kitchen-secondary hover:bg-green-600" disabled={isLoading}>
+
+        <Button
+          type="submit"
+          className="w-full bg-kitchen-secondary hover:bg-green-600"
+          disabled={isLoading}
+        >
           {isLoading ? "Signing in..." : "Sign In"}
         </Button>
 
         {isBiometricsAvailable && user && !hasBiometricCredential && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={isLoading}
+              >
                 <Shield className="mr-2 h-4 w-4" /> Set up biometric login
               </Button>
             </DialogTrigger>
@@ -158,19 +182,22 @@ const LoginForm = () => {
               <DialogHeader>
                 <DialogTitle>Register Biometric Authentication</DialogTitle>
                 <DialogDescription>
-                  Set up biometric authentication to log in with your fingerprint or face ID in the future.
+                  Set up biometric authentication to log in with your
+                  fingerprint or face ID in the future.
                 </DialogDescription>
               </DialogHeader>
               <div className="flex items-center justify-center py-6">
                 <Fingerprint className="h-16 w-16 text-blue-500" />
               </div>
               <DialogFooter>
-                <Button 
-                  onClick={handleRegisterBiometrics} 
+                <Button
+                  onClick={handleRegisterBiometrics}
                   disabled={isRegisteringBiometrics}
                   className="w-full"
                 >
-                  {isRegisteringBiometrics ? "Registering..." : "Register Biometrics"}
+                  {isRegisteringBiometrics
+                    ? "Registering..."
+                    : "Register Biometrics"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -179,12 +206,12 @@ const LoginForm = () => {
       </form>
 
       <div className="text-center text-sm text-gray-500">
-        <p>For demo purposes, use these credentials:</p>
+        {/* <p>For demo purposes, use these credentials:</p> */}
         <ul className="mt-2 space-y-1">
-          <li>Admin: admin@kitchen.com / admin123</li>
+          {/* <li>Admin: admin@kitchen.com / admin123</li>
           <li>Chef: chef@kitchen.com / chef123</li>
           <li>Cutter: cutter@kitchen.com / cutter123</li>
-          <li>Supervisor: supervisor@kitchen.com / super123</li>
+          <li>Supervisor: supervisor@kitchen.com / super123</li> */}
         </ul>
       </div>
     </div>
