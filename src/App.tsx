@@ -25,7 +25,7 @@ import PreparationEstimate from "./pages/PreperationEstimate";
 import PreparationPlans from "./pages/PreparationPlans";
 import SupervisorApprovalScreen from "./pages/SupervisorApprovalScreen";
 import PreparationPlanReport from "./pages/PreparationPlanReport";
-import CCTVManager from "./components/CctvManager";
+import CCTVManager from "./components/CCTVManager";
 
 const queryClient = new QueryClient();
 
