@@ -138,38 +138,83 @@ function dispatch(action: Action) {
 }
 
 type Toast = Omit<ToasterToast, "id">
+type ToastVariant = "default" | "success" | "error" | "warning" | "info";
+interface ExtendedToast extends Toast {
+  variant?: ToastVariant;
+}
 
-function toast({ ...props }: Toast) {
-  const id = genId()
+function toast({ variant = "default", ...props }: ExtendedToast) {
+  const id = genId();
 
-  const update = (props: ToasterToast) =>
+  const update = (props: ExtendedToast) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
-    })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+    });
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
 
   dispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
+      variant,
       id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) dismiss()
+        if (!open) dismiss();
       },
     },
-  })
+  });
 
   return {
     id: id,
     dismiss,
     update,
-  }
+  };
 }
+
+// Add these convenience methods
+toast.success = (props: Omit<Toast, "variant">) => {
+  return toast({ ...props, variant: "success" });
+};
+
+toast.error = (props: Omit<Toast, "variant">) => {
+  return toast({ ...props, variant: "error" });
+};
+
+
+// function toast({ ...props }: Toast) {
+//   const id = genId()
+
+//   const update = (props: ToasterToast) =>
+//     dispatch({
+//       type: "UPDATE_TOAST",
+//       toast: { ...props, id },
+//     })
+//   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+
+//   dispatch({
+//     type: "ADD_TOAST",
+//     toast: {
+//       ...props,
+//       id,
+//       open: true,
+//       onOpenChange: (open) => {
+//         if (!open) dismiss()
+//       },
+//     },
+//   })
+
+//   return {
+//     id: id,
+//     dismiss,
+//     update,
+//   }
+// }
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
+  
 
   React.useEffect(() => {
     listeners.push(setState)

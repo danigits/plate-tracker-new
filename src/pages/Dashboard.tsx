@@ -1,8 +1,8 @@
-
-import React from 'react';
-import DashboardStats from '@/components/dashboard/DashboardStats';
-import KitchenStatus from '@/components/dashboard/KitchenStatus';
-import AlertsNotifications from '@/components/dashboard/AlertsNotifications';
+import React from "react";
+import DashboardStats from "@/components/dashboard/DashboardStats";
+import KitchenStatus from "@/components/dashboard/KitchenStatus";
+import AlertsNotifications from "@/components/dashboard/AlertsNotifications";
+import KitchenTripDashboard from "@/components/dashboard/KitchenTripDashboard";
 
 const Dashboard: React.FC = () => {
   return (
@@ -10,7 +10,8 @@ const Dashboard: React.FC = () => {
       <DashboardStats />
       <div className="grid gap-6 md:grid-cols-2">
         <KitchenStatus />
-        <AlertsNotifications />
+
+        {/* <AlertsNotifications /> */}
       </div>
     </div>
   );

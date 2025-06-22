@@ -218,7 +218,7 @@ const EditMenuPage = () => {
         </Select>
 
         <Input
-          placeholder="Qty per serve"
+          placeholder="Qty per 1000 servings"
           type="number"
           value={perServingQty}
           onChange={(e) => setPerServingQty(e.target.value)}
@@ -234,7 +234,8 @@ const EditMenuPage = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Ingredient</TableHead>
-              <TableHead>Qty/Serve</TableHead>
+              <TableHead>Qty/1000</TableHead>
+              <TableHead>Qty/person</TableHead>
               <TableHead>Unit</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -244,6 +245,7 @@ const EditMenuPage = () => {
               <TableRow key={ing.ingredient_id}>
                 <TableCell>{ing.name}</TableCell>
                 <TableCell>{ing.perServingQty}</TableCell>
+                <TableCell>{ing.perServingQty / 1000}</TableCell>
                 <TableCell>{ing.unit}</TableCell>
                 <TableCell className="flex gap-2">
                   <Button

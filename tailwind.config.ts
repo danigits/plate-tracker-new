@@ -65,7 +65,7 @@ export default {
 				},
 				kitchen: {
 					primary: '#0f172a',
-					secondary: '#10b981',
+					secondary: "#FFA500",//'#10b981',
 					accent: '#6366f1',
 					warning: '#f59e0b',
 					danger: '#ef4444',

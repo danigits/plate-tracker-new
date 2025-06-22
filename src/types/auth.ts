@@ -12,6 +12,7 @@ export enum UserRole {
   CHEF = "chef",
   CUTTER = "cutter",
   SUPERVISOR = "supervisor",
+  DELIVERY="delivery"
 }
 
 export interface AuthContextType {
@@ -25,8 +26,9 @@ export interface AuthContextType {
 }
 
 export interface Profile {
+  delivery_point_id?: string | null;
   id: string;
   name: string;
-  role: 'admin' | 'chef' | 'cutter' | 'supervisor';
+  role: 'admin' | 'chef' | 'cutter' | 'supervisor'| 'delivery';
   kitchen_id?: string | null;
 }

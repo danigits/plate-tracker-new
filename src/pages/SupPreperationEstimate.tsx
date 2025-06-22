@@ -86,8 +86,8 @@ const PreparationTable: React.FC<{
             </TableCell>
             <TableCell>{plan.menu_items?.name ?? "-"}</TableCell>
             <TableCell>{plan.estimated_plates ?? "-"}</TableCell>
-            <TableCell>{plan.served_plates ?? "-"}</TableCell>
-            <TableCell>{plan.wasted_quantity ?? "-"}</TableCell>
+            <TableCell>{plan.consumption ?? "-"}</TableCell>
+            <TableCell>{plan.wastage_quantity ?? "-"}</TableCell>
             <TableCell>{getStatusBadge(plan.status)}</TableCell>
             <TableCell>
               {plan.date === today && (
@@ -103,7 +103,7 @@ const PreparationTable: React.FC<{
   );
 };
 
-const PreparationEstimate: React.FC = () => {
+const SupPreparationEstimate: React.FC = () => {
   // State management
   const [state, setState] = useState({
     plans: [] as PreparationPlan[],
@@ -124,7 +124,6 @@ const PreparationEstimate: React.FC = () => {
       breakfast: structuredClone(INITIAL_MEAL_PLAN),
       lunch: structuredClone(INITIAL_MEAL_PLAN),
       dinner: structuredClone(INITIAL_MEAL_PLAN),
-      snacks: structuredClone(INITIAL_MEAL_PLAN),
     },
   });
   const [deliveryPlans, setDeliveryPlans] = useState([]);
@@ -132,18 +131,22 @@ const PreparationEstimate: React.FC = () => {
   // Derived values
   const currentDate = formatDate(new Date());
   const tomorrowDate = formatDate(new Date(Date.now() + 86400000));
-
+  const kitchenId = state.kitchenUser?.kitchenId;
   const filteredPlans = state.plans.filter((plan) => {
+    if (kitchenId && plan.kitchen_id !== kitchenId) return false;
+
+    // Existing date filter
     const matchesDate =
       (state.activeTab === "today" && plan.date === currentDate) ||
       (state.activeTab === "tomorrow" && plan.date === tomorrowDate) ||
       state.activeTab === "all";
 
+    // Existing search filter
     const matchesSearch =
       plan.menu_items?.name
         ?.toLowerCase()
         .includes(state.searchTerm.toLowerCase()) ||
-      plan.wasted_reason
+      plan.wastage_reason
         ?.toLowerCase()
         .includes(state.searchTerm.toLowerCase());
 
@@ -248,9 +251,8 @@ const PreparationEstimate: React.FC = () => {
             menu_item_name: item.name,
             estimated_plates: item.headCount,
             actual_plates: null,
-            wasted_quantity: null,
-            served_quantity: null,
-            wasted_reason: "",
+            wastage: null,
+            wastage_reason: "",
             status: "planned",
           }))
       );
@@ -275,7 +277,6 @@ const PreparationEstimate: React.FC = () => {
           breakfast: structuredClone(INITIAL_MEAL_PLAN),
           lunch: structuredClone(INITIAL_MEAL_PLAN),
           dinner: structuredClone(INITIAL_MEAL_PLAN),
-          snacks: structuredClone(INITIAL_MEAL_PLAN),
         },
       });
     } catch (error) {
@@ -290,8 +291,8 @@ const PreparationEstimate: React.FC = () => {
       const { error } = await supabase
         .from("delivery_point_plan_items")
         .update({
-          wasted_quantity: state.editPlan.wasted_quantity,
-          wasted_reason: state.editPlan.wasted_reason,
+          wastage_quantity: state.editPlan.wastage_quantity,
+          wastage_reason: state.editPlan.wastage_reason,
         })
         .eq("id", state.editPlan.id);
 
@@ -337,7 +338,13 @@ const PreparationEstimate: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {state.plans.filter((plan) => plan.date === currentDate).length}
+              {
+                state.plans.filter(
+                  (p) =>
+                    p.date === currentDate &&
+                    (!kitchenId || p.kitchen_id === kitchenId)
+                ).length
+              }
             </div>
           </CardContent>
         </Card>
@@ -351,8 +358,12 @@ const PreparationEstimate: React.FC = () => {
           <CardContent>
             <div className="text-3xl font-bold">
               {state.plans
-                .filter((plan) => plan.date === currentDate)
-                .reduce((sum, plan) => sum + (plan.estimated_plates || 0), 0)}
+                .filter(
+                  (p) =>
+                    p.date === currentDate &&
+                    (!kitchenId || p.kitchen_id === kitchenId)
+                )
+                .reduce((sum, p) => sum + (p.estimated_plates || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -367,10 +378,12 @@ const PreparationEstimate: React.FC = () => {
             <div className="text-3xl font-bold text-kitchen-danger">
               {state.plans
                 .filter(
-                  (plan) =>
-                    plan.date === currentDate && plan.wasted_quantity !== null
+                  (p) =>
+                    p.date === currentDate &&
+                    p.wastage_quantity !== null &&
+                    (!kitchenId || p.kitchen_id === kitchenId)
                 )
-                .reduce((sum, plan) => sum + (plan.wasted_quantity || 0), 0)}
+                .reduce((sum, p) => sum + (p.wastage_quantity || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -539,4 +552,4 @@ const PreparationEstimate: React.FC = () => {
   );
 };
 
-export default PreparationEstimate;
+export default SupPreparationEstimate;

@@ -34,12 +34,18 @@ const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password); // get role directly
+
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
-      navigate("/dashboard");
+
+      if (loggedInUser.role === "delivery") {
+        navigate("/delivery_dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -49,52 +55,34 @@ const LoginForm = () => {
     }
   };
 
-  const handleBiometricLogin = async () => {
-    try {
-      await loginWithBiometrics();
-      toast({
-        title: "Biometric login successful",
-        description: "Welcome back!",
-      });
-      navigate("/dashboard");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Biometric login failed",
-        description:
-          "Could not authenticate with biometrics. Please try again or use password.",
-      });
-    }
-  };
+  // const handleRegisterBiometrics = async () => {
+  //   setIsRegisteringBiometrics(true);
+  //   try {
+  //     const success = await registerBiometrics();
+  //     if (success) {
+  //       toast({
+  //         title: "Biometrics registered",
+  //         description: "You can now use biometric authentication to log in.",
+  //       });
+  //     } else {
+  //       toast({
+  //         variant: "destructive",
+  //         title: "Registration failed",
+  //         description: "Could not register biometrics. Please try again.",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Registration failed",
+  //       description: "Error registering biometrics.",
+  //     });
+  //   } finally {
+  //     setIsRegisteringBiometrics(false);
+  //   }
+  // };
 
-  const handleRegisterBiometrics = async () => {
-    setIsRegisteringBiometrics(true);
-    try {
-      const success = await registerBiometrics();
-      if (success) {
-        toast({
-          title: "Biometrics registered",
-          description: "You can now use biometric authentication to log in.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Registration failed",
-          description: "Could not register biometrics. Please try again.",
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Registration failed",
-        description: "Error registering biometrics.",
-      });
-    } finally {
-      setIsRegisteringBiometrics(false);
-    }
-  };
-
-  const isBiometricsAvailable = window.PublicKeyCredential !== undefined;
+  // const isBiometricsAvailable = window.PublicKeyCredential !== undefined;
 
   return (
     <div className="w-full max-w-md space-y-6">
@@ -104,7 +92,7 @@ const LoginForm = () => {
         <p className="mt-2 text-gray-500">Sign in to your account</p>
       </div>
 
-      {hasBiometricCredential && (
+      {/* {hasBiometricCredential && (
         <div className="flex justify-center">
           <Button
             onClick={handleBiometricLogin}
@@ -115,7 +103,7 @@ const LoginForm = () => {
             <span>Sign in with Biometrics</span>
           </Button>
         </div>
-      )}
+      )} */}
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
@@ -166,7 +154,7 @@ const LoginForm = () => {
           {isLoading ? "Signing in..." : "Sign In"}
         </Button>
 
-        {isBiometricsAvailable && user && !hasBiometricCredential && (
+        {/* {isBiometricsAvailable && user && !hasBiometricCredential && (
           <Dialog>
             <DialogTrigger asChild>
               <Button
@@ -202,7 +190,7 @@ const LoginForm = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        )}
+        )} */}
       </form>
 
       <div className="text-center text-sm text-gray-500">

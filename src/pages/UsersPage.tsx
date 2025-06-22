@@ -48,8 +48,8 @@ export default function UsersPage() {
     }
   };
 
-  const setPassword = async (email: string, newPassword: string) => {
-    const { error } = await supabase.auth.admin.updateUserById(email, {
+  const setPassword = async (userId: string, newPassword: string) => {
+    const { error } = await supabase.auth.admin.updateUserById(userId, {
       password: newPassword,
     });
 
@@ -62,7 +62,7 @@ export default function UsersPage() {
     else
       toast({
         title: "Password Set",
-        description: `Password updated for ${email}`,
+        description: `Password updated successfully`,
       });
   };
 
@@ -120,7 +120,7 @@ export default function UsersPage() {
             <Button
               onClick={() => {
                 const newPassword = prompt("Enter new password:");
-                if (newPassword) setPassword(user.email, newPassword);
+                if (newPassword) setPassword(user.id, newPassword);
               }}
             >
               Set Password

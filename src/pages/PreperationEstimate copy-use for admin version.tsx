@@ -86,8 +86,8 @@ const PreparationTable: React.FC<{
             </TableCell>
             <TableCell>{plan.menu_items?.name ?? "-"}</TableCell>
             <TableCell>{plan.estimated_plates ?? "-"}</TableCell>
-            <TableCell>{plan.served_plates ?? "-"}</TableCell>
-            <TableCell>{plan.wasted_quantity ?? "-"}</TableCell>
+            <TableCell>{plan.consumption ?? "-"}</TableCell>
+            <TableCell>{plan.wastage_quantity ?? "-"}</TableCell>
             <TableCell>{getStatusBadge(plan.status)}</TableCell>
             <TableCell>
               {plan.date === today && (
@@ -124,7 +124,6 @@ const PreparationEstimate: React.FC = () => {
       breakfast: structuredClone(INITIAL_MEAL_PLAN),
       lunch: structuredClone(INITIAL_MEAL_PLAN),
       dinner: structuredClone(INITIAL_MEAL_PLAN),
-      snacks: structuredClone(INITIAL_MEAL_PLAN),
     },
   });
   const [deliveryPlans, setDeliveryPlans] = useState([]);
@@ -143,7 +142,7 @@ const PreparationEstimate: React.FC = () => {
       plan.menu_items?.name
         ?.toLowerCase()
         .includes(state.searchTerm.toLowerCase()) ||
-      plan.wasted_reason
+      plan.wastage_reason
         ?.toLowerCase()
         .includes(state.searchTerm.toLowerCase());
 
@@ -248,9 +247,8 @@ const PreparationEstimate: React.FC = () => {
             menu_item_name: item.name,
             estimated_plates: item.headCount,
             actual_plates: null,
-            wasted_quantity: null,
-            served_quantity: null,
-            wasted_reason: "",
+            wastage: null,
+            wastage_reason: "",
             status: "planned",
           }))
       );
@@ -275,7 +273,6 @@ const PreparationEstimate: React.FC = () => {
           breakfast: structuredClone(INITIAL_MEAL_PLAN),
           lunch: structuredClone(INITIAL_MEAL_PLAN),
           dinner: structuredClone(INITIAL_MEAL_PLAN),
-          snacks: structuredClone(INITIAL_MEAL_PLAN),
         },
       });
     } catch (error) {
@@ -290,8 +287,8 @@ const PreparationEstimate: React.FC = () => {
       const { error } = await supabase
         .from("delivery_point_plan_items")
         .update({
-          wasted_quantity: state.editPlan.wasted_quantity,
-          wasted_reason: state.editPlan.wasted_reason,
+          wastage_quantity: state.editPlan.wastage_quantity,
+          wastage_reason: state.editPlan.wastage_reason,
         })
         .eq("id", state.editPlan.id);
 
@@ -368,9 +365,9 @@ const PreparationEstimate: React.FC = () => {
               {state.plans
                 .filter(
                   (plan) =>
-                    plan.date === currentDate && plan.wasted_quantity !== null
+                    plan.date === currentDate && plan.wastage_quantity !== null
                 )
-                .reduce((sum, plan) => sum + (plan.wasted_quantity || 0), 0)}
+                .reduce((sum, plan) => sum + (plan.wastage_quantity || 0), 0)}
             </div>
           </CardContent>
         </Card>
