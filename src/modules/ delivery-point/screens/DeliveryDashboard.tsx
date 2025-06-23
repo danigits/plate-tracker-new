@@ -158,8 +158,8 @@ export function DeliveryDashboard() {
         `
         )
         .eq("delivery_point_id", profile.delivery_point_id)
-        //.eq("trip_instances.meal_type", currentMealType)
-        .eq("trip_instances.meal_type", "breakfast")
+        .eq("trip_instances.meal_type", currentMealType)
+       // .eq("trip_instances.meal_type", "breakfast")
         .eq("trip_instances.trip_date", today)
         .in("trip_instances.status", ["approved", "in_progress"])
         .order("created_at", {
