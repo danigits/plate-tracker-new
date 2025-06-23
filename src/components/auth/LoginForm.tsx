@@ -88,7 +88,7 @@ const LoginForm = () => {
     <div className="w-full max-w-md space-y-6">
       <div className="text-center">
         <ChefHat className="mx-auto h-16 w-16 text-kitchen-secondary" />
-        <h1 className="mt-4 text-3xl font-bold">Kitchen Manager</h1>
+        {/*  <h1 className="mt-4 text-3xl font-bold">Kitchen Manager</h1> */}
         <p className="mt-2 text-gray-500">Sign in to your account</p>
       </div>
 
