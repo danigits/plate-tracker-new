@@ -159,7 +159,7 @@ export function DeliveryDashboard() {
         )
         .eq("delivery_point_id", profile.delivery_point_id)
         .eq("trip_instances.meal_type", currentMealType)
-       // .eq("trip_instances.meal_type", "breakfast")
+        //.eq("trip_instances.meal_type", "breakfast")
         .eq("trip_instances.trip_date", today)
         .in("trip_instances.status", ["approved", "in_progress"])
         .order("created_at", {
@@ -617,7 +617,7 @@ export function DeliveryDashboard() {
               : "bg-green-600 hover:bg-green-700 text-white"
           }`}
         >
-          {editMode ? "Cancel Editing" : "Edit Delivery Details"}
+          {editMode ? "Cancel Editing" : "Enter Delivery Details"}
         </button>
 
         {editMode && (

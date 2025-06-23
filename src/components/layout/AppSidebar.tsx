@@ -33,6 +33,7 @@ const AppSidebar = () => {
   const { user, logout } = useAuth();
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
 
   if (!user) return null;
 
@@ -44,6 +45,9 @@ const AppSidebar = () => {
   };
   const toggleadminopen = () => {
     setAdminOpen(!adminOpen);
+  };
+  const toggleattendanceopen = () => {
+    setAttendanceOpen(!attendanceOpen);
   };
 
   return (
@@ -71,23 +75,16 @@ const AppSidebar = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuItem>
+
+                {/* <SidebarMenuItem>
                     <SidebarMenuButton asChild>
                       <Link to="/ktdashboard">
                         <LayoutDashboard size={20} />
                         <span>KitchentripDashboard</span>
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem></SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link to="/deliverypoints">
-                      <ClipboardList size={20} />
-                      <span>Deliverypoints</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                  </SidebarMenuItem> */}
+
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/preparationnew">
@@ -96,15 +93,23 @@ const AppSidebar = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-
                 <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/deliverypoints">
+                      <ClipboardList size={20} />
+                      <span>Food Tracking</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                {/* <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/preparationsup">
                       <ClipboardList size={20} />
                       <span>SUPER VISOR Meal Management</span>
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem> */}
 
                 {/* Inventory with submenu */}
                 <SidebarMenuItem>
@@ -164,14 +169,14 @@ const AppSidebar = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
+                {/* <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/recipes">
                       <CookingPot size={20} />
                       <span>Attendance</span>
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem> */}
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/cctv">
@@ -246,11 +251,58 @@ const AppSidebar = () => {
                             </SidebarMenuButton>
                           </SidebarMenuItem>
 
-                          <SidebarMenuItem>
+                          {/* <SidebarMenuItem>
                             <SidebarMenuButton asChild>
                               <Link to="/orderslist" className="pl-4">
                                 <ClipboardList size={16} />
                                 <span>Approve Orders</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem> */}
+                          {/* {attendanceOpen &&(
+                        <div className="ml-6 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
+                          
+                        </div>
+                      )} */}
+                        </div>
+                      )}
+                      <SidebarMenuButton
+                        onClick={toggleattendanceopen}
+                        className="justify-between"
+                      >
+                        <div className="flex items-center">
+                          <Package size={20} />
+                          <span>Attendance </span>
+                        </div>
+                        {attendanceOpen ? (
+                          <ChevronUp size={16} />
+                        ) : (
+                          <ChevronDown size={16} />
+                        )}
+                      </SidebarMenuButton>
+                      {attendanceOpen && (
+                        <div className="ml-6 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
+                          <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                              <Link to="/takeattendance">
+                                <Settings size={20} />
+                                <span>Take Attendance</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                          <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                              <Link to="/attendance">
+                                <Settings size={20} />
+                                <span>Attendance Report</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                          <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                              <Link to="/staff">
+                                <Settings size={20} />
+                                <span>Add Employees</span>
                               </Link>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
@@ -286,30 +338,6 @@ const AppSidebar = () => {
                         <Link to="/machines">
                           <Settings size={20} />
                           <span>Machine Management</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/attendance">
-                          <Settings size={20} />
-                          <span>Attendance</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/staff">
-                          <Settings size={20} />
-                          <span>HR Work</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/takeattendance">
-                          <Settings size={20} />
-                          <span>Take Attendance</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
