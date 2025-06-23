@@ -15,14 +15,22 @@ export enum UserRole {
   DELIVERY="delivery"
 }
 
+
+
+
+// In your types/auth.ts or where you define AuthContextType
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithBiometrics: () => Promise<void>;
-  logout: () => void;
+  profile: Profile | null;  // Make this required since you're using it
   isLoading: boolean;
-  registerBiometrics: () => Promise<boolean>;
   hasBiometricCredential: boolean;
+  isDelivery: boolean;
+  deliveryPointId: string | undefined;
+  kitchenId: string | undefined;
+  login: (email: string, password: string) => Promise<User>;
+  logout: () => Promise<void>;
+  loginWithBiometrics: () => Promise<void>;
+  registerBiometrics: () => Promise<boolean>;
 }
 
 export interface Profile {

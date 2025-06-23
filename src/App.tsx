@@ -31,7 +31,7 @@ import SupreparationEstimate from "./pages/SupPreperationEstimate";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DashboardRouter from "./components/DashboardRouter";
-import { DeliveryDashboard } from "./modules/ delivery-point/screens/DeliveryDashboard";
+import { DeliveryDashboard } from "./modules/delivery-point/screens/DeliveryDashboard";
 import { supabase } from "./integrations/supabase/client";
 import { PrivateRoutes } from "@/components/PrivateRoutes"; // new file you created
 import { MachineryUploadForm } from "./pages/MachineryUploadForm";

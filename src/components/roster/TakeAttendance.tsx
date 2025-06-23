@@ -6,17 +6,24 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export function TakeAttendance() {
   const [staff, setStaff] = useState<any[]>([]);
-  const [marking, setMarking] = useState<string[]>([]);
-  const [marked, setMarked] = useState<{ [id: string]: boolean }>({});
-  const [shift, setShift] = useState<string>("morning"); // ✅ fixed: use string not string[]
+  const [marking, setMarking] = useState<
+    { id: string; action: "present" | "absent" }[]
+  >([]);
+  const [attendance, setAttendance] = useState<{
+    [id: string]: {
+      status: "present" | "absent" | null;
+      check_in_time?: string;
+    };
+  }>({});
+  const [shift, setShift] = useState<string>("morning");
   const { user } = useAuth();
 
   useEffect(() => {
     if (user?.kitchenId) {
       fetchStaff();
-      fetchMarked();
+      fetchAttendance();
     }
-  }, [user?.kitchenId, shift]); // ✅ fixed: added shift and user dependency
+  }, [user?.kitchenId, shift]);
 
   const fetchStaff = async () => {
     const { data, error } = await supabase
@@ -32,10 +39,10 @@ export function TakeAttendance() {
     setStaff(data || []);
   };
 
-  const fetchMarked = async () => {
+  const fetchAttendance = async () => {
     const { data, error } = await supabase
       .from("kitchen_staff_attendance")
-      .select("staff_id")
+      .select("staff_id, status, check_in_time")
       .eq("kitchen_id", user?.kitchenId)
       .eq("date", dayjs().format("YYYY-MM-DD"))
       .eq("shift", shift);
@@ -44,35 +51,61 @@ export function TakeAttendance() {
       console.error("Error fetching attendance:", error.message);
     }
 
-    const markedMap: any = {};
+    const attendanceMap: any = {};
     (data || []).forEach((row) => {
-      markedMap[row.staff_id] = true;
+      attendanceMap[row.staff_id] = {
+        status: row.status,
+        check_in_time: row.check_in_time,
+      };
     });
 
-    setMarked(markedMap);
+    setAttendance(attendanceMap);
   };
 
-  const handleMarkPresent = async (staffId: string) => {
-    setMarking((prev) => [...prev, staffId]);
+  const handleMarkAttendance = async (
+    staffId: string,
+    status: "present" | "absent"
+  ) => {
+    setMarking((prev) => [...prev, { id: staffId, action: status }]);
 
-    const { error } = await supabase.from("kitchen_staff_attendance").insert([
-      {
-        staff_id: staffId,
-        kitchen_id: user?.kitchenId,
-        date: dayjs().format("YYYY-MM-DD"),
-        shift,
-        status: "present",
-        check_in_time: new Date(),
-      },
-    ]);
+    // First delete any existing record for this staff/shift/day
+    await supabase
+      .from("kitchen_staff_attendance")
+      .delete()
+      .eq("staff_id", staffId)
+      .eq("kitchen_id", user?.kitchenId)
+      .eq("date", dayjs().format("YYYY-MM-DD"))
+      .eq("shift", shift);
 
-    if (error) {
-      alert("Error marking attendance: " + error.message);
-    } else {
-      setMarked((prev) => ({ ...prev, [staffId]: true }));
+    // Then insert new record if marking present
+    if (status === "present") {
+      const { error } = await supabase.from("kitchen_staff_attendance").insert([
+        {
+          staff_id: staffId,
+          kitchen_id: user?.kitchenId,
+          date: dayjs().format("YYYY-MM-DD"),
+          shift,
+          status: "present",
+          check_in_time: new Date(),
+        },
+      ]);
+
+      if (error) {
+        alert("Error marking attendance: " + error.message);
+      }
     }
 
-    setMarking((prev) => prev.filter((id) => id !== staffId));
+    // Update local state
+    setAttendance((prev) => ({
+      ...prev,
+      [staffId]: {
+        status,
+        check_in_time:
+          status === "present" ? new Date().toISOString() : undefined,
+      },
+    }));
+
+    setMarking((prev) => prev.filter((item) => item.id !== staffId));
   };
 
   return (
@@ -90,27 +123,61 @@ export function TakeAttendance() {
         </select>
       </div>
 
-      {staff.map((s) => (
-        <div
-          key={s.id}
-          className="p-2 border rounded flex justify-between items-center"
-        >
-          <div>
-            <div className="font-medium">{s.full_name}</div>
-            <div className="text-sm text-gray-600">{s.role}</div>
+      {staff.map((s) => {
+        const isMarking = marking.some((m) => m.id === s.id);
+        const currentStatus = attendance[s.id]?.status;
+
+        return (
+          <div
+            key={s.id}
+            className="p-2 border rounded flex justify-between items-center"
+          >
+            <div>
+              <div className="font-medium">{s.full_name}</div>
+              <div className="text-sm text-gray-600">{s.role}</div>
+              {currentStatus === "present" &&
+                attendance[s.id]?.check_in_time && (
+                  <div className="text-xs text-gray-500">
+                    {dayjs(attendance[s.id].check_in_time).format("h:mm A")}
+                  </div>
+                )}
+            </div>
+
+            <div className="flex gap-2">
+              {currentStatus === "present" ? (
+                <>
+                  <span className="text-green-600 font-semibold">
+                    ✅ Present
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleMarkAttendance(s.id, "absent")}
+                    disabled={isMarking}
+                  >
+                    {isMarking ? "Updating..." : "Mark Absent"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleMarkAttendance(s.id, "absent")}
+                    disabled={isMarking}
+                  >
+                    {isMarking ? "Updating..." : "Mark Absent"}
+                  </Button>
+                  <Button
+                    onClick={() => handleMarkAttendance(s.id, "present")}
+                    disabled={isMarking}
+                  >
+                    {isMarking ? "Updating..." : "Mark Present"}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-          {marked[s.id] ? (
-            <span className="text-green-600 font-semibold">✅ Marked</span>
-          ) : (
-            <Button
-              onClick={() => handleMarkPresent(s.id)}
-              disabled={marking.includes(s.id)}
-            >
-              {marking.includes(s.id) ? "Marking..." : "Mark Present"}
-            </Button>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
