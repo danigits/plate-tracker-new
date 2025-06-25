@@ -55,7 +55,8 @@ type DashboardState = {
 };
 
 export function DeliveryDashboard() {
-  const { profile } = useAuth();
+  const { profile, isLoading } = useAuth();
+  const [mealType, setmealType] = useState<string>("breakfast");
   const [state, setState] = useState<DashboardState>({
     loading: true,
     planItems: [],
@@ -94,7 +95,7 @@ export function DeliveryDashboard() {
   // Helper functions
   const getCurrentMealType = useCallback((): MealType => {
     const hours = new Date().getHours();
-    if (hours >= 0 && hours < 10) return "breakfast";
+    if (hours >= 5 && hours < 10) return "breakfast";
     if (hours >= 10 && hours < 14) return "lunch";
     if (hours >= 14 && hours < 18) return "snacks";
     if (hours >= 18 && hours < 22) return "dinner";
@@ -178,7 +179,7 @@ export function DeliveryDashboard() {
         `
         )
         .eq("delivery_point_id", profile.delivery_point_id)
-        .eq("trip_instances.meal_type", currentMealType)
+        .eq("trip_instances.meal_type", mealType)
         .eq("trip_instances.trip_date", today)
         .in("trip_instances.status", ["approved", "in_progress"])
         .order("created_at", {
@@ -223,27 +224,23 @@ export function DeliveryDashboard() {
 
   // Combined data fetching effect
   useEffect(() => {
-    if (!profile?.delivery_point_id) return;
+    //if (!profile?.delivery_point_id) return;
+    console.log("profile", profile?.name);
 
     const mealType = getCurrentMealType();
+    setmealType({ mealType });
     updateState({ mealType });
 
-    const fetchAllData = async () => {
-      await Promise.all([
-        fetchPlanItems(),
-        fetchTrip(),
-        fetchDeliveryPoint(profile.delivery_point_id),
-      ]);
-    };
-
     fetchAllData();
-  }, [
-    profile?.delivery_point_id,
-    fetchPlanItems,
-    fetchTrip,
-    fetchDeliveryPoint,
-    getCurrentMealType,
-  ]);
+  }, [profile]); // 👈 Only runs when profile is available
+
+  const fetchAllData = async () => {
+    await Promise.all([
+      fetchPlanItems(),
+      fetchTrip(),
+      fetchDeliveryPoint(profile?.delivery_point_id),
+    ]);
+  };
 
   // Slideshow effects
   const nextSlide = useCallback(
@@ -323,9 +320,19 @@ export function DeliveryDashboard() {
   };
 
   const validateRow = (item: PlanItem) => {
-    if (item.served_plates > item.received_plates) {
-      return "Served plates cannot exceed received";
+    if (
+      item.served_plates == null ||
+      item.received_plates == null ||
+      isNaN(item.served_plates) ||
+      isNaN(item.received_plates)
+    ) {
+      return "Received and Served plates must be valid numbers.";
     }
+
+    if (item.served_plates > item.received_plates) {
+      return "Served plates cannot exceed received.";
+    }
+
     return "";
   };
 
@@ -334,26 +341,31 @@ export function DeliveryDashboard() {
       const validationErrors = state.updatedItems
         .map(validateRow)
         .filter(Boolean);
+
       if (validationErrors.length > 0) {
         alert(`Validation errors:\n${validationErrors.join("\n")}`);
         return;
       }
 
-      const updatePromises = state.updatedItems.map((item) =>
-        supabase
+      const updatePromises = state.updatedItems.map((item) => {
+        if (!item.id) {
+          throw new Error("Item ID is missing");
+        }
+
+        return supabase
           .from("delivery_point_plan_items")
           .update({
             received_plates: item.received_plates,
             served_plates: item.served_plates,
             wasted_reason: item.wasted_reason,
           })
-          .eq("id", item.id)
-      );
+          .eq("id", item.id);
+      });
 
       const results = await Promise.all(updatePromises);
-      const errors = results.filter((r) => r.error);
 
-      if (errors.length > 0) throw errors[0].error;
+      const failed = results.find((r) => r.error);
+      if (failed) throw failed.error;
 
       alert("Updated successfully!");
       updateState({ editMode: false });
@@ -375,8 +387,24 @@ export function DeliveryDashboard() {
     }
   }, [state.editMode, state.planItems]);
 
+  // if (isLoading) {
+  //   return <div className="p-8 text-center">Loading dashboard...</div>;
+  // }
+
   // Loading states
   if (state.loading || state.deliveryPointLoading) {
+    <button
+      onClick={() => {
+        if (profile?.delivery_point_id) {
+          fetchPlanItems();
+          fetchTrip();
+          fetchDeliveryPoint(profile.delivery_point_id);
+        }
+      }}
+      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
+    >
+      Retry
+    </button>;
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />

@@ -44,96 +44,174 @@ import FuelManagement from "./components/FuelManagement";
 import { AttendanceReport } from "./components/roster/AttendanceReport";
 import KitchenStaffManager from "./components/roster/KitchenStaffManager";
 import { TakeAttendance } from "./components/roster/TakeAttendance";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  //if (!profile) return null; // Or show a loading spinner
+const AppShellContent = () => {
+  const { isLoading, user } = useAuth();
 
-  //const { user } = useAuth();
+  if (isLoading) {
+    return <div className="p-4 text-center">🔄 Loading user session...</div>;
+  }
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route element={<PrivateRoutes />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            <Route
+              path="/delivery_dashboard"
+              element={
+                <ErrorBoundary>
+                  <DeliveryDashboard />
+                </ErrorBoundary>
+              }
+            />
+
+            <Route
+              path="/deliverypoints"
+              element={
+                <ErrorBoundary>
+                  <DeliveryPointManager />
+                </ErrorBoundary>
+              }
+            />
+            {/* other protected routes */}
+
+            <Route path="/ktdashboard" element={<DeliveryPointManager />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/preparation" element={<Preparation />} />
+            <Route path="/preparationnew" element={<PreparationEstimate />} />
+            <Route path="/preparationsup" element={<SupreparationEstimate />} />
+            <Route path="/approvals" element={<SupervisorApprovalScreen />} />
+            <Route path="/recipes" element={<RecipePage />} />
+            <Route path="/cook" element={<CookingSession />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/orders" element={<InventoryOrderScreen />} />
+            <Route path="/orderslist" element={<SupervisorOrdersPage />} />
+            <Route path="/menu-items/create" element={<MenuManagerForm />} />
+            <Route path="/edit-menu/:id" element={<EditMenuPage />} />
+            <Route path="/preparation-plans" element={<PreparationPlans />} />
+            <Route path="/ingredients" element={<IngredientsPage />} />
+            <Route path="/reports" element={<PreparationPlanReport />} />
+            <Route path="/attendance" element={<AttendanceReport />} />
+            <Route path="/takeattendance" element={<TakeAttendance />} />
+            <Route path="/staff" element={<KitchenStaffManager />} />
+
+            <Route path="/cctv" element={<CCTVManager />} />
+            <Route path="/machines" element={<MachineryManager />} />
+            <Route
+              path="/vehicaltracker"
+              element={
+                <ErrorBoundary>
+                  <VehicleTracking />
+                </ErrorBoundary>
+              }
+            />
+            <Route path="/routeform" element={<CreateRouteForm />} />
+
+            <Route path="/fuelmgmt" element={<FuelManagement />} />
+
+            <Route path="*" element={<NotFound />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+const AppShell = () => {
+  const { isLoading } = useAuth();
+
+  if (isLoading) return <div>🔄 Loading user session...</div>;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route element={<PrivateRoutes />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            <Route
+              path="/delivery_dashboard"
+              element={
+                <ErrorBoundary>
+                  <DeliveryDashboard />
+                </ErrorBoundary>
+              }
+            />
+
+            <Route
+              path="/deliverypoints"
+              element={
+                <ErrorBoundary>
+                  <DeliveryPointManager />
+                </ErrorBoundary>
+              }
+            />
+            {/* other protected routes */}
+
+            <Route path="/ktdashboard" element={<DeliveryPointManager />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/preparation" element={<Preparation />} />
+            <Route path="/preparationnew" element={<PreparationEstimate />} />
+            <Route path="/preparationsup" element={<SupreparationEstimate />} />
+            <Route path="/approvals" element={<SupervisorApprovalScreen />} />
+            <Route path="/recipes" element={<RecipePage />} />
+            <Route path="/cook" element={<CookingSession />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/orders" element={<InventoryOrderScreen />} />
+            <Route path="/orderslist" element={<SupervisorOrdersPage />} />
+            <Route path="/menu-items/create" element={<MenuManagerForm />} />
+            <Route path="/edit-menu/:id" element={<EditMenuPage />} />
+            <Route path="/preparation-plans" element={<PreparationPlans />} />
+            <Route path="/ingredients" element={<IngredientsPage />} />
+            <Route path="/reports" element={<PreparationPlanReport />} />
+            <Route path="/attendance" element={<AttendanceReport />} />
+            <Route path="/takeattendance" element={<TakeAttendance />} />
+            <Route path="/staff" element={<KitchenStaffManager />} />
+
+            <Route path="/cctv" element={<CCTVManager />} />
+            <Route path="/machines" element={<MachineryManager />} />
+            <Route
+              path="/vehicaltracker"
+              element={
+                <ErrorBoundary>
+                  <VehicleTracking />
+                </ErrorBoundary>
+              }
+            />
+            <Route path="/routeform" element={<CreateRouteForm />} />
+
+            <Route path="/fuelmgmt" element={<FuelManagement />} />
+
+            <Route path="*" element={<NotFound />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<Login />} />
-
-              <Route element={<PrivateRoutes />}>
-                <Route element={<AppLayout />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-
-                  <Route
-                    path="/delivery_dashboard"
-                    element={<DeliveryDashboard />}
-                  />
-
-                  <Route
-                    path="/deliverypoints"
-                    element={<DeliveryPointManager />}
-                  />
-                  {/* other protected routes */}
-
-                  <Route
-                    path="/ktdashboard"
-                    element={<DeliveryPointManager />}
-                  />
-                  <Route path="/inventory" element={<Inventory />} />
-                  <Route path="/preparation" element={<Preparation />} />
-                  <Route
-                    path="/preparationnew"
-                    element={<PreparationEstimate />}
-                  />
-                  <Route
-                    path="/preparationsup"
-                    element={<SupreparationEstimate />}
-                  />
-                  <Route
-                    path="/approvals"
-                    element={<SupervisorApprovalScreen />}
-                  />
-                  <Route path="/recipes" element={<RecipePage />} />
-                  <Route path="/cook" element={<CookingSession />} />
-                  <Route path="/users" element={<UsersPage />} />
-                  <Route path="/orders" element={<InventoryOrderScreen />} />
-                  <Route
-                    path="/orderslist"
-                    element={<SupervisorOrdersPage />}
-                  />
-                  <Route
-                    path="/menu-items/create"
-                    element={<MenuManagerForm />}
-                  />
-                  <Route path="/edit-menu/:id" element={<EditMenuPage />} />
-                  <Route
-                    path="/preparation-plans"
-                    element={<PreparationPlans />}
-                  />
-                  <Route path="/ingredients" element={<IngredientsPage />} />
-                  <Route path="/reports" element={<PreparationPlanReport />} />
-                  <Route path="/attendance" element={<AttendanceReport />} />
-                  <Route path="/takeattendance" element={<TakeAttendance />} />
-                  <Route path="/staff" element={<KitchenStaffManager />} />
-
-                  <Route path="/cctv" element={<CCTVManager />} />
-                  <Route path="/machines" element={<MachineryManager />} />
-                  <Route path="/vehicaltraker" element={<VehicleTracking />} />
-                  <Route path="/routeform" element={<CreateRouteForm />} />
-
-                  <Route path="/fuelmgmt" element={<FuelManagement />} />
-
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+          <AppShell />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 };
 

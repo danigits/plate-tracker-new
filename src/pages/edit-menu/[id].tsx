@@ -98,6 +98,7 @@ export default function EditMenuItem() {
         name: i.ingredients.name,
         unit: i.ingredients.unit,
         perServingQty: i.per_serving_qty,
+        price: i.price,
       }));
 
       setAddedIngredients(loaded);
@@ -260,6 +261,7 @@ export default function EditMenuItem() {
               <TableHead>Ingredient</TableHead>
               <TableHead>Qty</TableHead>
               <TableHead>Unit</TableHead>
+              <TableHead>Price</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -268,6 +270,7 @@ export default function EditMenuItem() {
               <TableRow key={ing.ingredient_id}>
                 <TableCell>{ing.name}</TableCell>
                 <TableCell>{ing.perServingQty}</TableCell>
+                <TableCell>{ing.price}</TableCell>
                 <TableCell>{ing.unit}</TableCell>
                 <TableCell className="flex gap-2">
                   <Button

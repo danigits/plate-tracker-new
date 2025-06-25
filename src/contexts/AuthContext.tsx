@@ -11,6 +11,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) {
+//     throw new Error("useAuth must be used within an AuthProvider");
+//   }
+//   return context;
+// };
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -19,11 +31,7 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -31,38 +39,86 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [hasBiometricCredential, setHasBiometricCredential] = useState(false);
 
   // Initialize auth state
+  // useEffect(() => {
+  //   const initializeAuth = async () => {
+  //     setIsLoading(true);
+
+  //     // Check for existing session
+  //     const {
+  //       data: { session },
+  //       error,
+  //     } = await supabase.auth.getSession();
+
+  //     if (error) {
+  //       console.error("Session check error:", error);
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     if (session?.user) {
+  //       await handleAuthenticatedUser(session.user);
+  //     }
+
+  //     setIsLoading(false);
+  //   };
+
+  //   initializeAuth();
+
+  //   // Set up auth state listener
+  //   const {
+  //     data: { subscription },
+  //   } = supabase.auth.onAuthStateChange(async (event, session) => {
+  //     if (event === "SIGNED_IN" && session?.user) {
+  //       await handleAuthenticatedUser(session.user);
+  //     } else if (event === "SIGNED_OUT") {
+  //       setUser(null);
+  //       setProfile(null);
+  //       localStorage.removeItem("kitchenUser");
+  //     }
+  //   });
+
+  //   return () => subscription.unsubscribe();
+  // }, []);
+
+  useEffect(() => {
+    console.log("👤 Current user:", user);
+    console.log("📄 Profile:", profile);
+    console.log("⏱️ Loading state:", isLoading);
+  }, [user, profile, isLoading]);
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log("🔄 Checking Supabase session...");
       setIsLoading(true);
 
-      // Check for existing session
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      try {
+        const result = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("Session check error:", error);
+        console.log("📦 Supabase session result:", result);
+
+        const session = result.data?.session;
+        if (session?.user) {
+          console.log("✅ Active session user:", session.user);
+          await handleAuthenticatedUser(session.user);
+        } else {
+          console.warn("⚠️ No session found. User likely logged out.");
+        }
+      } catch (error) {
+        console.error("🔥 Error during session init:", error);
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      if (session?.user) {
-        await handleAuthenticatedUser(session.user);
-      }
-
-      setIsLoading(false);
     };
 
     initializeAuth();
 
-    // Set up auth state listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("🔁 Auth event:", event);
       if (event === "SIGNED_IN" && session?.user) {
-        await handleAuthenticatedUser(session.user);
-      } else if (event === "SIGNED_OUT") {
+        handleAuthenticatedUser(session.user);
+      }
+      if (event === "SIGNED_OUT") {
         setUser(null);
         setProfile(null);
         localStorage.removeItem("kitchenUser");
@@ -72,16 +128,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // const handleAuthenticatedUser = async (user: any) => {
+  //   try {
+  //     // Fetch user profile
+  //     const { data: profile, error: profileError } = await supabase
+  //       .from("profiles")
+  //       .select("*")
+  //       .eq("id", user.id)
+  //       .single();
+
+  //     if (profileError) throw profileError;
+
+  //     const userData: User = {
+  //       id: user.id,
+  //       email: user.email!,
+  //       name: profile.name,
+  //       role: profile.role as UserRole,
+  //       kitchenId: profile.kitchen_id ?? undefined,
+  //       delivery_point_id: profile.delivery_point_id ?? undefined,
+  //     };
+
+  //     setUser(userData);
+  //     setProfile(profile);
+  //     localStorage.setItem("kitchenUser", JSON.stringify(userData));
+
+  //     // Check biometric credentials
+  //     checkBiometricAvailability();
+  //   } catch (error) {
+  //     console.error("Error handling authenticated user:", error);
+  //     await supabase.auth.signOut();
+  //   }
+  // };
   const handleAuthenticatedUser = async (user: any) => {
     try {
-      // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError || !profile) throw profileError;
 
       const userData: User = {
         id: user.id,
@@ -96,11 +182,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setProfile(profile);
       localStorage.setItem("kitchenUser", JSON.stringify(userData));
 
-      // Check biometric credentials
-      checkBiometricAvailability();
+      await checkBiometricAvailability(); // await this too
     } catch (error) {
       console.error("Error handling authenticated user:", error);
-      await supabase.auth.signOut();
+      await supabase.auth.signOut(); // logout if invalid
     }
   };
 
@@ -146,23 +231,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(error?.message || "Invalid email or password");
       }
 
-      // Fetch and return the complete user profile
-      const { data: profile } = await supabase
+      // Fetch and set the complete user profile
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", data.user.id)
         .single();
 
+      if (profileError || !profile) {
+        throw new Error("Profile not found");
+      }
+
       const userData: User = {
         id: data.user.id,
         email: data.user.email!,
-        name: profile?.name || "",
-        role: profile?.role as UserRole,
-        kitchenId: profile?.kitchen_id,
-        delivery_point_id: profile?.delivery_point_id,
+        profile: profile as Profile,
+        name: profile.name,
+        role: profile.role as UserRole,
+        kitchenId: profile.kitchen_id,
+        delivery_point_id: profile.delivery_point_id,
       };
 
       setUser(userData);
+      setProfile(profile); // 🔥 This was missing
+      localStorage.setItem("kitchenUser", JSON.stringify(userData));
+
       return userData;
     } finally {
       setIsLoading(false);
@@ -174,10 +267,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [profile]);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    localStorage.removeItem("kitchenUser");
+    try {
+      setIsLoading(true);
+
+      // Sign out from Supabase (clears tokens)
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      // Clear local storage
+      localStorage.removeItem("kitchenUser");
+      localStorage.removeItem("biometric_credential_id");
+      localStorage.removeItem("biometric_user_email");
+
+      // Clear state
+      setUser(null);
+      setProfile(null);
+
+      // ✅ Force refresh or redirect
+      // window.location.href = "/login"; // Or wherever your login route is
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const registerBiometrics = async (): Promise<boolean> => {
@@ -218,24 +330,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Memoize context value to prevent unnecessary re-renders
-  const contextValue = useMemo(
-    () => ({
-      user,
-      profile,
-      isLoading,
-      hasBiometricCredential,
-      isDelivery: profile?.role === UserRole.DELIVERY,
-      deliveryPointId: profile?.delivery_point_id,
-      kitchenId: profile?.kitchen_id,
-      login,
-      logout,
-      loginWithBiometrics,
-      registerBiometrics,
-    }),
-    [user, profile, isLoading, hasBiometricCredential]
-  );
+  // const contextValue = useMemo(
+  //   () => ({
+  //     user,
+  //     profile,
+  //     isLoading,
+  //     hasBiometricCredential,
+  //     isDelivery: profile?.role === UserRole.DELIVERY,
+  //     deliveryPointId: profile?.delivery_point_id,
+  //     kitchenId: profile?.kitchen_id,
+  //     login,
+  //     logout,
+  //     loginWithBiometrics,
+  //     registerBiometrics,
+  //   }),
+  //   [user, profile, isLoading, hasBiometricCredential]
+  // );
 
   return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        login,
+        logout,
+        isLoading,
+        loginWithBiometrics,
+        registerBiometrics,
+        hasBiometricCredential,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 };
+
+export type { AuthContextType };

@@ -336,7 +336,7 @@ export default function DeliveryPointManager() {
                           />
                         ))}
                       </div>
-                      {deliveryPoints.length < 10 && (
+                      {deliveryPoints.length < 30 && (
                         <Button
                           variant="outline"
                           onClick={handleAddField}

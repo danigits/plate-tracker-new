@@ -6,9 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ChefHat } from "lucide-react";
 
 const Login: React.FC = () => {
-  const { user, loading } = useAuth(); // assuming you expose loading in useAuth
+  const { user, isLoading } = useAuth(); // assuming you expose loading in useAuth
   const [isLogin, setIsLogin] = useState(true);
-  if (loading) {
+  if (isLoading) {
     return <div className="text-center py-10">Loading...</div>;
   }
 

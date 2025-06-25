@@ -5,6 +5,7 @@ export interface User {
   email: string;
   role: UserRole;
   kitchenId?: string;
+  profile?:Profile;
 }
 
 export enum UserRole {
@@ -12,7 +13,9 @@ export enum UserRole {
   CHEF = "chef",
   CUTTER = "cutter",
   SUPERVISOR = "supervisor",
-  DELIVERY="delivery"
+  DELIVERY="delivery",
+  INVENTORY = "INVENTORY",
+  SUPERADMIN = "SUPERADMIN"
 }
 
 

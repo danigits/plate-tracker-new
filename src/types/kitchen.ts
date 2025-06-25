@@ -56,4 +56,6 @@ export interface Ingredient {
   id: string;
   name: string;
   unit: string;
+  price:number;
+  image_url:string;
 }

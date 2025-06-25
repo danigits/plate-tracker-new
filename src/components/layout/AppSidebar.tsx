@@ -40,6 +40,8 @@ const AppSidebar = () => {
   const isAdmin = user.role === UserRole.ADMIN;
   const isSupervisor = user.role === UserRole.SUPERVISOR;
   const isDelivery = user.role === UserRole.DELIVERY;
+  const isInventory = user.role === UserRole.INVENTORY;
+  const isSuperAdmin = user.role === UserRole.SUPERADMIN;
   const toggleInventory = () => {
     setInventoryOpen(!inventoryOpen);
   };
@@ -95,9 +97,25 @@ const AppSidebar = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
+                    <Link to="/approvals">
+                      <Settings size={20} />
+                      <span>Indents & Approvals</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
                     <Link to="/deliverypoints">
                       <ClipboardList size={20} />
                       <span>Food Tracking</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/vehicaltracker">
+                      <Settings size={20} />
+                      <span>Vehical Tracking</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -112,54 +130,56 @@ const AppSidebar = () => {
                 </SidebarMenuItem> */}
 
                 {/* Inventory with submenu */}
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={toggleInventory}
-                    className="justify-between"
-                  >
-                    <div className="flex items-center">
-                      <Package size={20} />
-                      <span>Inventory</span>
-                    </div>
-                    {inventoryOpen ? (
-                      <ChevronUp size={16} />
-                    ) : (
-                      <ChevronDown size={16} />
+                {isInventory && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={toggleInventory}
+                      className="justify-between"
+                    >
+                      <div className="flex items-center">
+                        <Package size={20} />
+                        <span>Inventory</span>
+                      </div>
+                      {inventoryOpen ? (
+                        <ChevronUp size={16} />
+                      ) : (
+                        <ChevronDown size={16} />
+                      )}
+                    </SidebarMenuButton>
+
+                    {/* Submenu items - shown only when inventoryOpen is true */}
+                    {inventoryOpen && (
+                      <div className="ml-6 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <Link to="/inventory" className="pl-4">
+                              <Package size={16} />
+                              <span>Manage Inventory</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <Link to="/orders" className="pl-4">
+                              <ClipboardList size={16} />
+                              <span>Orders</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <Link to="/orderslist" className="pl-4">
+                              <ClipboardList size={16} />
+                              <span>Approve Orders</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </div>
                     )}
-                  </SidebarMenuButton>
-
-                  {/* Submenu items - shown only when inventoryOpen is true */}
-                  {inventoryOpen && (
-                    <div className="ml-6 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <Link to="/inventory" className="pl-4">
-                            <Package size={16} />
-                            <span>Manage Inventory</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <Link to="/orders" className="pl-4">
-                            <ClipboardList size={16} />
-                            <span>Orders</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <Link to="/orderslist" className="pl-4">
-                            <ClipboardList size={16} />
-                            <span>Approve Orders</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </div>
-                  )}
-                </SidebarMenuItem>
+                  </SidebarMenuItem>
+                )}
 
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
@@ -350,22 +370,7 @@ const AppSidebar = () => {
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/vehicaltraker">
-                          <Settings size={20} />
-                          <span>Vehical Tracking</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/approvals">
-                          <Settings size={20} />
-                          <span>Indents & Approvals</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild>
                         <Link to="/reports">

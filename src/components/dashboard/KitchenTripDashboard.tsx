@@ -90,28 +90,54 @@ const KitchenTripDashboard = () => {
   //   if (!error && data) setTrips(data);
   // };
 
-  const fetchTrips = async () => {
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  // const fetchTrips = async () => {//24th June 2025
+  //   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
+  //   const { data, error } = await supabase
+  //     .from("trip_instances")
+  //     .select("*")
+  //     .eq("kitchen_id", kitchenId)
+  //     .eq("trip_date", today)
+  //     .order("created_at", { ascending: false });
+
+  //   if (!error && data) {
+  //     setTrips(data);
+
+  //     const inProgressTrip = data.find((t) => t.status === "in_progress");
+  //     const pendingTrip = data.find((t) => t.status === "pending");
+
+  //     if (inProgressTrip) {
+  //       setTrip(inProgressTrip);
+  //       await fetchTripPoints(inProgressTrip.id);
+  //     } else if (pendingTrip) {
+  //       setTrip(pendingTrip);
+  //       await fetchTripPoints(pendingTrip.id);
+  //     } else {
+  //       setTrip(null);
+  //       setTripPoints([]);
+  //     }
+  //   } else {
+  //     console.error("Error fetching trips:", error);
+  //   }
+  // };
+  const fetchTrips = async () => {
     const { data, error } = await supabase
       .from("trip_instances")
       .select("*")
       .eq("kitchen_id", kitchenId)
-      .eq("trip_date", today)
       .order("created_at", { ascending: false });
 
     if (!error && data) {
       setTrips(data);
 
-      const inProgressTrip = data.find((t) => t.status === "in_progress");
-      const pendingTrip = data.find((t) => t.status === "pending");
+      // 🔁 Show the currently active trip first (in_progress), then pending
+      const activeTrip =
+        data.find((t) => t.status === "in_progress") ||
+        data.find((t) => t.status === "pending");
 
-      if (inProgressTrip) {
-        setTrip(inProgressTrip);
-        await fetchTripPoints(inProgressTrip.id);
-      } else if (pendingTrip) {
-        setTrip(pendingTrip);
-        await fetchTripPoints(pendingTrip.id);
+      if (activeTrip) {
+        setTrip(activeTrip);
+        await fetchTripPoints(activeTrip.id);
       } else {
         setTrip(null);
         setTripPoints([]);
@@ -124,10 +150,19 @@ const KitchenTripDashboard = () => {
   const fetchTripPoints = async (tripId: string) => {
     const { data, error } = await supabase
       .from("trip_delivery_points")
-      .select("*, delivery_point:delivery_points(*)")
+      //.select("*, delivery_point:delivery_points(*)")
+      .select(
+        "*, delivery_point:delivery_points!trip_delivery_points_delivery_point_id_fkey(*)"
+      )
+
       .eq("trip_id", tripId)
       .order("stop_order", { ascending: true });
-    if (!error && data) setTripPoints(data);
+
+    if (!error && data) {
+      setTripPoints(data);
+    } else {
+      console.error("Trip Points error", error);
+    }
   };
 
   const createTrip = async () => {

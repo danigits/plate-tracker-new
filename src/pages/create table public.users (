@@ -1,0 +1,427 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.delivery_point_feedback (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  delivery_point_id uuid,
+  delivery_point_plan_item_id uuid UNIQUE,
+  consumed_qty numeric,
+  wastage_qty numeric,
+  avg_qty_per_plate numeric,
+  arrival_time time without time zone,
+  feedback_text text,
+  submitted_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT delivery_point_feedback_pkey PRIMARY KEY (id),
+  CONSTRAINT delivery_point_feedback_delivery_point_id_fkey FOREIGN KEY (delivery_point_id) REFERENCES public.delivery_points(id),
+  CONSTRAINT delivery_point_feedback_delivery_point_plan_item_id_fkey FOREIGN KEY (delivery_point_plan_item_id) REFERENCES public.delivery_point_plan_items(id)
+);
+CREATE TABLE public.delivery_point_plan_items (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  delivery_point_id uuid NOT NULL,
+  number_of_plates integer,
+  received_time timestamp with time zone,
+  wastage_quantity integer,
+  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'received'::text, 'delivered'::text, 'completed'::text, 'approved'::text])),
+  updated_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  date date,
+  estimated_plates integer,
+  kitchen_id uuid,
+  meal_type text CHECK (meal_type = ANY (ARRAY['breakfast'::text, 'lunch'::text, 'snacks'::text, 'dinner'::text])),
+  menu_item_id uuid,
+  wastage_reason text,
+  received_plates integer,
+  served_plates integer,
+  served_quantity numeric,
+  wasted_reason text,
+  wasted_quantity numeric DEFAULT (received_plates - served_plates),
+  delivered_time timestamp with time zone,
+  delivery_point_id_text text,
+  CONSTRAINT delivery_point_plan_items_pkey PRIMARY KEY (id),
+  CONSTRAINT delivery_point_plan_items_delivery_point_id_fkey FOREIGN KEY (delivery_point_id) REFERENCES public.delivery_points(id),
+  CONSTRAINT delivery_point_plan_items_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id),
+  CONSTRAINT delivery_point_plan_items_menu_item_id_fkey FOREIGN KEY (menu_item_id) REFERENCES public.menu_items(id)
+);
+CREATE TABLE public.delivery_point_users (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  delivery_point_id uuid NOT NULL,
+  role text NOT NULL DEFAULT 'delivery_point_user'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT delivery_point_users_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.delivery_points (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  kitchen_id uuid,
+  name text,
+  code text,
+  created_at timestamp without time zone DEFAULT now(),
+  auth_token text,
+  latitude numeric,
+  longitude numeric,
+  CONSTRAINT delivery_points_pkey PRIMARY KEY (id),
+  CONSTRAINT delivery_points_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.delivery_route_points (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  route_id uuid NOT NULL,
+  delivery_point_id uuid NOT NULL,
+  stop_order integer NOT NULL,
+  sequence_number integer,
+  CONSTRAINT delivery_route_points_pkey PRIMARY KEY (id),
+  CONSTRAINT delivery_route_points_delivery_point_id_fkey FOREIGN KEY (delivery_point_id) REFERENCES public.delivery_points(id),
+  CONSTRAINT delivery_route_points_route_id_fkey FOREIGN KEY (route_id) REFERENCES public.delivery_routes(id)
+);
+CREATE TABLE public.delivery_routes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  kitchen_id uuid NOT NULL,
+  meal_type text NOT NULL CHECK (meal_type = ANY (ARRAY['breakfast'::text, 'lunch'::text, 'snacks'::text, 'dinner'::text])),
+  name text NOT NULL,
+  is_active boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT delivery_routes_pkey PRIMARY KEY (id),
+  CONSTRAINT delivery_routes_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.indents (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  kitchen_id uuid NOT NULL,
+  ingredient_id uuid NOT NULL,
+  required_qty double precision NOT NULL,
+  date date NOT NULL,
+  approved boolean DEFAULT false,
+  delivery_point_id uuid,
+  menu_item_id uuid,
+  meal_type text,
+  estimated_plates integer,
+  CONSTRAINT indents_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_indent_delivery_point FOREIGN KEY (delivery_point_id) REFERENCES public.delivery_points(id),
+  CONSTRAINT indents_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id),
+  CONSTRAINT indents_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id),
+  CONSTRAINT fk_indent_menu_item FOREIGN KEY (menu_item_id) REFERENCES public.menu_items(id)
+);
+CREATE TABLE public.ingredients (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  unit text NOT NULL,
+  price numeric CHECK (price > 0::numeric),
+  image_url text,
+  CONSTRAINT ingredients_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.inventory_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  category USER-DEFINED NOT NULL,
+  quantity numeric NOT NULL DEFAULT 0,
+  unit USER-DEFINED NOT NULL,
+  threshold numeric NOT NULL DEFAULT 10,
+  kitchen_id uuid,
+  user_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  pricePerUnit numeric,
+  image_url character varying,
+  CONSTRAINT inventory_items_pkey PRIMARY KEY (id),
+  CONSTRAINT inventory_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT inventory_items_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.inventory_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  item_id uuid NOT NULL,
+  previous_quantity numeric,
+  new_quantity numeric NOT NULL,
+  changed_by uuid NOT NULL,
+  change_reason text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT inventory_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT inventory_logs_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES auth.users(id),
+  CONSTRAINT inventory_logs_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.inventory_items(id)
+);
+CREATE TABLE public.inventory_order_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  order_id uuid,
+  item_name text NOT NULL,
+  requested_quantity numeric NOT NULL,
+  unit text NOT NULL,
+  status text NOT NULL DEFAULT 'pending'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT inventory_order_items_pkey PRIMARY KEY (id),
+  CONSTRAINT inventory_order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.inventory_orders(id)
+);
+CREATE TABLE public.inventory_orders (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  supervisor_id uuid,
+  status text NOT NULL DEFAULT 'pending'::text,
+  submitted_at timestamp with time zone DEFAULT now(),
+  kitchen_id uuid,
+  approved_at timestamp with time zone,
+  approved_by uuid,
+  CONSTRAINT inventory_orders_pkey PRIMARY KEY (id),
+  CONSTRAINT inventory_orders_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id),
+  CONSTRAINT inventory_orders_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.kitchen_cameras (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  kitchen_id uuid,
+  name text,
+  stream_url text,
+  supports_audio boolean DEFAULT false,
+  CONSTRAINT kitchen_cameras_pkey PRIMARY KEY (id),
+  CONSTRAINT kitchen_cameras_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.kitchen_fuel_management (
+  id integer NOT NULL DEFAULT nextval('kitchen_fuel_management_id_seq'::regclass),
+  kitchen_id text NOT NULL,
+  entry_date date NOT NULL,
+  fuel_type character varying NOT NULL,
+  unit character varying NOT NULL,
+  start_date date,
+  end_date date,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  morning_reading numeric,
+  evening_reading numeric,
+  total_consumption numeric,
+  CONSTRAINT kitchen_fuel_management_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.kitchen_staff (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  kitchen_id uuid,
+  full_name text NOT NULL,
+  role text NOT NULL,
+  phone text,
+  joining_date date DEFAULT CURRENT_DATE,
+  is_active boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT kitchen_staff_pkey PRIMARY KEY (id),
+  CONSTRAINT kitchen_staff_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.kitchen_staff_attendance (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  kitchen_id uuid,
+  staff_id uuid,
+  date date NOT NULL,
+  shift text,
+  status text NOT NULL CHECK (status = ANY (ARRAY['present'::text, 'absent'::text, 'late'::text, 'on_leave'::text])),
+  check_in_time timestamp without time zone,
+  check_out_time timestamp without time zone,
+  remarks text,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT kitchen_staff_attendance_pkey PRIMARY KEY (id),
+  CONSTRAINT kitchen_staff_attendance_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id),
+  CONSTRAINT kitchen_staff_attendance_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.kitchen_staff(id)
+);
+CREATE TABLE public.kitchens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  location text NOT NULL,
+  status text NOT NULL DEFAULT 'active'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  latitude numeric,
+  longitude numeric,
+  CONSTRAINT kitchens_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.machinery (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  kitchen_id uuid,
+  name text,
+  details text,
+  media_urls ARRAY,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT machinery_pkey PRIMARY KEY (id),
+  CONSTRAINT machinery_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.machinery_usage_log (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  machinery_id uuid,
+  user_id uuid,
+  start_time timestamp without time zone,
+  end_time timestamp without time zone,
+  CONSTRAINT machinery_usage_log_pkey PRIMARY KEY (id),
+  CONSTRAINT machinery_usage_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT machinery_usage_log_machinery_id_fkey FOREIGN KEY (machinery_id) REFERENCES public.machinery(id)
+);
+CREATE TABLE public.menu_categories (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  CONSTRAINT menu_categories_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.menu_item_ingredients (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  menu_item_id uuid,
+  ingredient_id uuid,
+  per_serving_qty double precision NOT NULL,
+  required_qty double precision NOT NULL,
+  final_used_qty double precision,
+  CONSTRAINT menu_item_ingredients_pkey PRIMARY KEY (id),
+  CONSTRAINT menu_item_ingredients_menu_item_id_fkey FOREIGN KEY (menu_item_id) REFERENCES public.menu_items(id),
+  CONSTRAINT menu_item_ingredients_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id)
+);
+CREATE TABLE public.menu_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  category_id uuid,
+  name text NOT NULL,
+  serving_qty double precision DEFAULT 1000,
+  itemurl text,
+  CONSTRAINT menu_items_pkey PRIMARY KEY (id),
+  CONSTRAINT menu_items_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.menu_categories(id)
+);
+CREATE TABLE public.menus (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  kitchen_id uuid,
+  name text NOT NULL,
+  date date DEFAULT CURRENT_DATE,
+  CONSTRAINT menus_pkey PRIMARY KEY (id),
+  CONSTRAINT menus_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  name text,
+  role text,
+  kitchen_id text,
+  email character varying,
+  delivery_point_id uuid,
+  delivery_point_uuid uuid DEFAULT delivery_point_id,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.recipe_steps (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  recipe_id uuid,
+  step_order integer,
+  instruction text,
+  duration_seconds integer,
+  delay_seconds integer DEFAULT 0,
+  delay_sec integer DEFAULT 0,
+  duration_sec integer,
+  step_number integer,
+  CONSTRAINT recipe_steps_pkey PRIMARY KEY (id),
+  CONSTRAINT recipe_steps_recipe_id_fkey FOREIGN KEY (recipe_id) REFERENCES public.recipes(id)
+);
+CREATE TABLE public.recipes (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text,
+  description text,
+  created_at timestamp without time zone,
+  created_by uuid,
+  CONSTRAINT recipes_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.trip_delivery_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  trip_run_id uuid,
+  delivery_point_id uuid,
+  stop_order integer,
+  start_time timestamp without time zone,
+  delivered_time timestamp without time zone,
+  received_by uuid,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT trip_delivery_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT trip_delivery_logs_trip_run_id_fkey FOREIGN KEY (trip_run_id) REFERENCES public.trip_runs(id),
+  CONSTRAINT trip_delivery_logs_delivery_point_id_fkey FOREIGN KEY (delivery_point_id) REFERENCES public.delivery_points(id),
+  CONSTRAINT trip_delivery_logs_received_by_fkey FOREIGN KEY (received_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.trip_delivery_points (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  trip_id uuid,
+  delivery_point_id uuid,
+  stop_order integer,
+  reached boolean DEFAULT false,
+  delivered_time timestamp with time zone,
+  kitchen_id uuid,
+  distance_km numeric,
+  fuel_price numeric,
+  sequence_number integer,
+  status text,
+  CONSTRAINT trip_delivery_points_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_kitchen FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id),
+  CONSTRAINT trip_delivery_points_delivery_point_id_fkey FOREIGN KEY (delivery_point_id) REFERENCES public.delivery_points(id),
+  CONSTRAINT trip_delivery_points_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trip_instances(id)
+);
+CREATE TABLE public.trip_instances (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  route_id uuid,
+  kitchen_id uuid,
+  meal_type text CHECK (meal_type = ANY (ARRAY['breakfast'::text, 'lunch'::text, 'snacks'::text, 'dinner'::text])),
+  trip_date date DEFAULT CURRENT_DATE,
+  status text DEFAULT 'pending'::text,
+  started_at timestamp without time zone,
+  ended_at timestamp without time zone,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT trip_instances_pkey PRIMARY KEY (id),
+  CONSTRAINT trip_instances_route_id_fkey FOREIGN KEY (route_id) REFERENCES public.delivery_routes(id),
+  CONSTRAINT trip_instances_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.trip_routes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  kitchen_id uuid,
+  meal_type text CHECK (meal_type = ANY (ARRAY['breakfast'::text, 'lunch'::text, 'snacks'::text, 'dinner'::text])),
+  route_name text,
+  is_active boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT trip_routes_pkey PRIMARY KEY (id),
+  CONSTRAINT trip_routes_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.trip_run_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  trip_run_id uuid NOT NULL,
+  delivery_point_id uuid NOT NULL,
+  arrival_time timestamp without time zone,
+  received_by uuid,
+  remarks text,
+  CONSTRAINT trip_run_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT trip_run_logs_trip_run_id_fkey FOREIGN KEY (trip_run_id) REFERENCES public.trip_runs(id),
+  CONSTRAINT trip_run_logs_received_by_fkey FOREIGN KEY (received_by) REFERENCES public.users(id),
+  CONSTRAINT trip_run_logs_delivery_point_id_fkey FOREIGN KEY (delivery_point_id) REFERENCES public.delivery_points(id)
+);
+CREATE TABLE public.trip_runs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  route_id uuid,
+  date date NOT NULL,
+  meal_type text CHECK (meal_type = ANY (ARRAY['breakfast'::text, 'lunch'::text, 'snacks'::text, 'dinner'::text])),
+  kitchen_id uuid,
+  start_time timestamp without time zone,
+  end_time timestamp without time zone,
+  status text DEFAULT 'not_started'::text CHECK (status = ANY (ARRAY['not_started'::text, 'started'::text, 'completed'::text])),
+  created_at timestamp without time zone DEFAULT now(),
+  return_time timestamp without time zone,
+  CONSTRAINT trip_runs_pkey PRIMARY KEY (id),
+  CONSTRAINT trip_runs_route_id_fkey FOREIGN KEY (route_id) REFERENCES public.trip_routes(id),
+  CONSTRAINT trip_runs_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL,
+  updated_at timestamp with time zone,
+  username text UNIQUE,
+  full_name text,
+  avatar_url text,
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.vehicle_trips (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  vehicle_id uuid,
+  kitchen_id uuid,
+  trip_date date NOT NULL,
+  total_distance_km numeric,
+  fuel_cost numeric,
+  created_at timestamp without time zone DEFAULT now(),
+  vehicle_number text,
+  driver_name text,
+  start_time timestamp without time zone,
+  end_time timestamp without time zone,
+  CONSTRAINT vehicle_trips_pkey PRIMARY KEY (id),
+  CONSTRAINT vehicle_trips_kitchen_id_fkey FOREIGN KEY (kitchen_id) REFERENCES public.kitchens(id),
+  CONSTRAINT vehicle_trips_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id)
+);
+CREATE TABLE public.vehicles (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  number_plate text UNIQUE,
+  mileage numeric,
+  fuel_rate numeric,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT vehicles_pkey PRIMARY KEY (id)
+);

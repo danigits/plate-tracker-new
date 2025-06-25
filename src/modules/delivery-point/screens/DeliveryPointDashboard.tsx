@@ -45,20 +45,21 @@ export function DeliveryPointDashboard({
         .from("trip_instances")
         .select(
           `
-          id,
-          status,
-          meal_type,
-          trip_delivery_points(
-            id,
-            delivery_point_id,
-            stop_order,
-            delivered_time,
-            delivery_points(name)
-          )
-        `
+    id,
+    status,
+    meal_type,
+    trip_delivery_points(
+      id,
+      delivery_point_id,
+      stop_order,
+      delivered_time,
+      delivery_points!trip_delivery_points_delivery_point_id_fkey(name)
+    )
+  `
         )
+
         .eq("id", tripId)
-        .single();
+        .maybeSingle(); //very important
 
       if (tripError || !tripData)
         throw tripError || new Error("Trip not found");
@@ -207,6 +208,19 @@ export function DeliveryPointDashboard({
     );
   }
 
+  if (currentStop?.id !== delivery_point_id) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Not Your Turn</CardTitle>
+        </CardHeader>
+        <CardContent>
+          Please wait. Current stop: {currentStop?.name}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -256,7 +270,7 @@ export function DeliveryPointDashboard({
             </p>
           )}
         </div>
-        {currentStop.id == delivery_point_id && (
+        {
           <div>
             <Button
               className="w-full"
@@ -266,7 +280,7 @@ export function DeliveryPointDashboard({
               Complete This Stop
             </Button>
           </div>
-        )}
+        }
       </CardContent>
     </Card>
   );
