@@ -130,7 +130,7 @@ const AppSidebar = () => {
                 </SidebarMenuItem> */}
 
                 {/* Inventory with submenu */}
-                {isInventory && (
+                {isAdmin && (
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={toggleInventory}
@@ -140,7 +140,7 @@ const AppSidebar = () => {
                         <Package size={20} />
                         <span>Inventory</span>
                       </div>
-                      {inventoryOpen ? (
+                      {adminOpen ? (
                         <ChevronUp size={16} />
                       ) : (
                         <ChevronDown size={16} />
@@ -148,7 +148,7 @@ const AppSidebar = () => {
                     </SidebarMenuButton>
 
                     {/* Submenu items - shown only when inventoryOpen is true */}
-                    {inventoryOpen && (
+                    {adminOpen && (
                       <div className="ml-6 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
