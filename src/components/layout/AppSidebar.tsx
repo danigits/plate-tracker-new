@@ -209,7 +209,7 @@ const AppSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-        {(isDelivery || isAdmin) && (
+        {isDelivery && (
           <SidebarGroup>
             <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
