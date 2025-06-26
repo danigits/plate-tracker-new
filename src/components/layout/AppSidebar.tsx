@@ -140,7 +140,7 @@ const AppSidebar = () => {
                         <Package size={20} />
                         <span>Inventory</span>
                       </div>
-                      {adminOpen ? (
+                      {inventoryOpen ? (
                         <ChevronUp size={16} />
                       ) : (
                         <ChevronDown size={16} />
@@ -148,7 +148,7 @@ const AppSidebar = () => {
                     </SidebarMenuButton>
 
                     {/* Submenu items - shown only when inventoryOpen is true */}
-                    {adminOpen && (
+                    {inventoryOpen && (
                       <div className="ml-6 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
